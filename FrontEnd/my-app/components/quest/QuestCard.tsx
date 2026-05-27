@@ -189,15 +189,29 @@ export const QuestCard = memo(
         <div className="quest-card__footer" aria-hidden="true">
           {quest.creator && (
             <div className="quest-card__creator">
-              <span
-                className="quest-card__avatar"
-                style={{ backgroundColor: avatarColor(quest.creator.name) }}
-                aria-hidden="true"
-              >
-                {quest.creator.name.slice(0, 2).toUpperCase()}
-              </span>
+              {quest.creator.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={quest.creator.avatarUrl}
+                  alt=""
+                  className="quest-card__avatar quest-card__avatar--img"
+                  aria-hidden="true"
+                />
+              ) : (
+                <span
+                  className="quest-card__avatar"
+                  style={{
+                    backgroundColor: avatarColor(
+                      quest.creator.name || 'Unknown'
+                    ),
+                  }}
+                  aria-hidden="true"
+                >
+                  {(quest.creator.name || 'UN').slice(0, 2).toUpperCase()}
+                </span>
+              )}
               <span className="quest-card__creator-name">
-                {quest.creator.name}
+                {quest.creator.name || 'Unknown Creator'}
               </span>
             </div>
           )}
