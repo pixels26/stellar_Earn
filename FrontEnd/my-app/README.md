@@ -135,6 +135,18 @@ pnpm build
 pnpm start
 ```
 
+### Bundle Analysis
+
+To analyze the route-level code splitting and identify the largest chunks in the production build:
+
+```bash
+# Run the bundle analyzer
+pnpm analyze
+# or
+npm run analyze
+```
+This will open the bundle analyzer reports in your browser to help you inspect chunk sizes.
+
 ## Key Components
 
 ### Wallet Integration
