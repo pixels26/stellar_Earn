@@ -26,7 +26,6 @@ jobs:
           filters: |
             frontend:
               - 'FrontEnd/my-app/**'
-              - '.github/workflows/prettier.yml'
 
   prettier:
     name: Prettier Check

@@ -31,16 +31,13 @@ jobs:
             contracts:
               - 'contracts/**'
               - 'scripts/**'
-              - '.github/workflows/dependency-audit.yml'
               - 'contracts/earn-quest/Cargo.lock'
             frontend:
               - 'FrontEnd/my-app/package.json'
               - 'FrontEnd/my-app/package-lock.json'
-              - '.github/workflows/dependency-audit.yml'
             backend:
               - 'BackEnd/package.json'
               - 'BackEnd/package-lock.json'
-              - '.github/workflows/dependency-audit.yml'
 
   cargo-audit:
     name: Security Audit
