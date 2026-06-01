@@ -19,6 +19,7 @@ What lives **here** instead is the context Swagger can't express on its own: wha
 | [Module API Reference](./module-apis.md) | Every backend module — its responsibility, its HTTP surface (base path, key routes, auth), and the events it emits or consumes. |
 | [Data Flow & Diagrams](./data-flow.md) | System context, the request pipeline, the quest → verification → payout lifecycle, the event-driven backbone, and trace correlation. Rendered as Mermaid. |
 | [Type Ownership Guidelines](./type-ownership-guidelines.md) | How DTOs, domain models, and view models map across layers — defining type ownership and boundaries. |
+| [Reliability Roadmap](./RELIABILITY_ROADMAP.md) | Milestones for green CI, test quality targets, and performance SLOs. |
  
 ## Platform-wide conventions
  
