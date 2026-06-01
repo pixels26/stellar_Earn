@@ -9,18 +9,26 @@ function buildCommands(cwd, command, files) {
     return [];
   }
 
-  return [`cd ${cwd} && npx ${command} ${relativeFiles.join(' ')}`];
+  // Use --prefix instead of changing directories to be compatible with
+  // Windows/git-hook environments where `cd` may fail.
+  return [`npx --prefix ${cwd} ${command} ${relativeFiles.join(' ')}`];
+}
+
+function buildNpmScript(cwd, scriptName, files) {
+  const relativeFiles = files.map((file) => path.relative(cwd, file).replace(/\\/g, '/'));
+  if (relativeFiles.length === 0) return [];
+  return [`npm --prefix ${cwd} run ${scriptName} -- --fix ${relativeFiles.join(' ')}`];
 }
 
 /** @type {import('lint-staged').Configuration} */
 module.exports = {
   'FrontEnd/my-app/**/*.{js,jsx,ts,tsx,css,scss,md,json,yml,yaml}': (files) => [
     ...buildCommands(FRONTEND_DIR, 'prettier --write', files),
-    ...buildCommands(FRONTEND_DIR, 'eslint --fix', files),
+    ...buildNpmScript(FRONTEND_DIR, 'lint', files),
   ],
   'BackEnd/{src,test}/**/*.ts': (files) => [
     ...buildCommands(BACKEND_DIR, 'prettier --write', files),
-    ...buildCommands(BACKEND_DIR, 'eslint --fix', files),
+    ...buildNpmScript(BACKEND_DIR, 'lint', files),
   ],
   'BackEnd/**/*.json': (files) =>
     buildCommands(BACKEND_DIR, 'prettier --write', files),
