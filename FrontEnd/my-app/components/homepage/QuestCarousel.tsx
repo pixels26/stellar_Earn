@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import type { Quest } from '@/lib/types/quest';
 import { QuestCard } from '@/components/quest/QuestCard';
 

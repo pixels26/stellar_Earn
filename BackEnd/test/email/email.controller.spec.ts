@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { EmailController } from '../../src/modules/email/email.controller';
-import { EmailService } from '../../src/modules/email/email.service';
-import { EmailStatus, SendEmailDto } from '../../src/modules/email/dto/email.dto';
+import { EmailController } from '#src/modules/email/email.controller';
+import { EmailService } from '#src/modules/email/email.service';
+import { EmailStatus, SendEmailDto } from '#src/modules/email/dto/email.dto';
 
 describe('EmailController', () => {
   let controller: EmailController;

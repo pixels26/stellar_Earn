@@ -20,12 +20,13 @@ interface ThemeContextValue {
 }
 
 const THEME_STORAGE_KEY = 'stellar_earn_theme';
+const DEFAULT_THEME: Theme = 'light';
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getSystemTheme(): Theme {
   if (typeof window === 'undefined') {
-    return 'light';
+    return DEFAULT_THEME;
   }
 
   return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -40,42 +41,79 @@ function applyTheme(theme: Theme) {
   root.style.colorScheme = theme;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') {
-      return 'light';
+/**
+ * Safe theme initialization that prevents hydration mismatches
+ * Uses server-safe default first, then syncs with client localStorage in useEffect
+ */
+function useSafeThemeState() {
+  // Initialize with safe default to prevent hydration mismatch
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Sync with localStorage and system preferences only on client
+  useEffect(() => {
+    try {
+      const storedTheme = window.localStorage.getItem(
+        THEME_STORAGE_KEY
+      ) as Theme | null;
+      const initialTheme = storedTheme === 'dark' || storedTheme === 'light'
+        ? storedTheme
+        : getSystemTheme();
+      setThemeState(initialTheme);
+      applyTheme(initialTheme);
+    } catch (err) {
+      console.warn('Failed to read theme preference:', err);
     }
-
-    const storedTheme = window.localStorage.getItem(
-      THEME_STORAGE_KEY
-    ) as Theme | null;
-    return storedTheme === 'dark' || storedTheme === 'light'
-      ? storedTheme
-      : getSystemTheme();
-  });
-
-  useEffect(() => {
-    applyTheme(theme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const hasStoredPreference = () =>
-      window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ||
-      window.localStorage.getItem(THEME_STORAGE_KEY) === 'light';
-
-    const handleSystemChange = () => {
-      if (!hasStoredPreference()) {
-        const nextTheme = mediaQuery.matches ? 'dark' : 'light';
-        setThemeState(nextTheme);
-        applyTheme(nextTheme);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    setIsHydrated(true);
   }, []);
+
+  return [theme, setThemeState, isHydrated] as const;
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState, isHydrated] = useSafeThemeState();
+
+  // Persist theme to localStorage when it changes
+  useEffect(() => {
+    if (!isHydrated) return;
+    
+    try {
+      applyTheme(theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (err) {
+      console.warn('Failed to persist theme preference:', err);
+    }
+  }, [theme, isHydrated]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const hasStoredPreference = () => {
+        try {
+          const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+          return stored === 'dark' || stored === 'light';
+        } catch {
+          return false;
+        }
+      };
+
+      const handleSystemChange = () => {
+        if (!hasStoredPreference()) {
+          const nextTheme = mediaQuery.matches ? 'dark' : 'light';
+          setThemeState(nextTheme);
+          applyTheme(nextTheme);
+        }
+      };
+
+      mediaQuery.addEventListener('change', handleSystemChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    } catch (err) {
+      console.warn('Failed to setup system theme listener:', err);
+    }
+  }, [isHydrated]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
     setThemeState(nextTheme);

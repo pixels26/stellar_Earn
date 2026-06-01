@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TerminusModule } from '@nestjs/terminus';
-import { ModerationModule } from '../../../src/modules/moderation/moderation.module';
-import { HealthModule } from '../../../src/modules/health/health.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { ModerationService } from '../../../src/modules/moderation/moderation.service';
-import { HealthService } from '../../../src/modules/health/health.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { User } from '../../../src/modules/users/entities/user.entity';
-import { ModerationItem } from '../../../src/modules/moderation/entities/moderation-item.entity';
+import { ModerationModule } from '#src/modules/moderation/moderation.module';
+import { HealthModule } from '#src/modules/health/health.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { ModerationService } from '#src/modules/moderation/moderation.service';
+import { HealthService } from '#src/modules/health/health.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { User } from '#src/modules/users/entities/user.entity';
+import { ModerationItem } from '#src/modules/moderation/entities/moderation-item.entity';
 
 describe('Moderation-Health Integration', () => {
   let module: TestingModule;

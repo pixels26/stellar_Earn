@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useMemo } from 'react';
+import { useState, Suspense, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatusFilter } from '@/components/submission/StatusFilter';
@@ -70,42 +70,51 @@ function SubmissionsContent() {
   const hasMore = currentPage < totalPages;
 
   // Update URL when filter changes
-  const handleStatusChange = (status: SubmissionStatus | undefined) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (status) {
-      params.set('status', status);
-    } else {
-      params.delete('status');
-    }
-    params.set('page', '1'); // Reset to first page when filter changes
-    router.push(`/submissions?${params.toString()}`);
-  };
+  const handleStatusChange = useCallback(
+    (status: SubmissionStatus | undefined) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (status) {
+        params.set('status', status);
+      } else {
+        params.delete('status');
+      }
+      params.set('page', '1'); // Reset to first page when filter changes
+      router.push(`/submissions?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
   // Update URL when page changes
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
-    router.push(`/submissions?${params.toString()}`);
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', page.toString());
+      router.push(`/submissions?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // Reset to first page on search
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', '1');
-    router.push(`/submissions?${params.toString()}`);
-  };
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      // Reset to first page on search
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', '1');
+      router.push(`/submissions?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-  const handleSubmissionClick = (submission: Submission) => {
+  const handleSubmissionClick = useCallback((submission: Submission) => {
     setSelectedSubmission(submission);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     // Clear selected submission after animation
     setTimeout(() => setSelectedSubmission(null), 300);
-  };
+  }, []);
 
   return (
     <AppLayout>

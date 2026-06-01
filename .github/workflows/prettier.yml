@@ -8,8 +8,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    name: Detect Frontend Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect FrontEnd changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'FrontEnd/my-app/**'
+
   prettier:
     name: Prettier Check
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -24,10 +45,15 @@ jobs:
         with:
           node-version: '22'
           cache: "npm"
-          cache-dependency-path: FrontEnd/my-app/package-lock.json
+          cache-dependency-path: FrontEnd/my-app/package.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Check formatting
         run: npm run format:check

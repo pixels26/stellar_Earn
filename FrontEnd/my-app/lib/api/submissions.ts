@@ -29,6 +29,7 @@ import type {
   PaginationParams,
 } from '@/lib/types/api.types';
 import type { ProofType } from '@/lib/validation/submission';
+import { assertValidCreateSubmissionRequest } from '@/lib/validation/submission';
 
 // Re-export legacy shapes so existing hooks keep compiling
 // export type { CreateSubmissionRequest as CreateSubmissionData } from '@/lib/types/api.types';
@@ -170,6 +171,8 @@ export async function createSubmission(
     // Include base64 content for files ≤ 5 MB; larger files use uploadProofFile()
     if (file.size <= 5 * 1024 * 1024) {
       proof.fileContent = await fileToBase64(file);
+    } else if (data.proof.link) {
+      proof.link = data.proof.link;
     }
   }
 
@@ -178,6 +181,8 @@ export async function createSubmission(
     proof,
     additionalNotes: data.additionalNotes,
   };
+
+  assertValidCreateSubmissionRequest(payload);
 
   return post<SubmissionResponse>(
     `/quests/${data.questId}/submissions`,

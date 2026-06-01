@@ -1,12 +1,12 @@
-/**
+﻿/**
  * Test Helpers and Utilities for Unit Tests
  * Provides mock objects, factories, and common test utilities
  */
 
 import { Repository } from 'typeorm';
-import { User } from '../../src/modules/users/entities/user.entity';
-import { RefreshToken } from '../../src/modules/auth/entities/refresh-token.entity';
-import { Role } from '../../src/common/enums/role.enum';
+import { User } from '#src/modules/users/entities/user.entity';
+import { RefreshToken } from '#src/modules/auth/entities/refresh-token.entity';
+import { Role } from '#src/common/enums/role.enum';
 
 /**
  * Creates a mock repository for TypeORM entities

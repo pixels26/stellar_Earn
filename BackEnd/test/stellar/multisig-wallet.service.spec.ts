@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { MultiSigWalletService } from 'src/modules/stellar/multisig/services/multisig-wallet.service';
-import { MultiSigWallet, MultiSigWalletStatus } from 'src/modules/stellar/multisig/entities/multisig-wallet.entity';
-import { MultiSigSigner, SignerRole, SignerStatus } from 'src/modules/stellar/multisig/entities/multisig-signer.entity';
-import { MultiSigTransaction, MultiSigTransactionStatus, MultiSigTransactionType } from 'src/modules/stellar/multisig/entities/multisig-transaction.entity';
-import { MultiSigSignature, SignatureStatus } from 'src/modules/stellar/multisig/entities/multisig-signature.entity';
-import { CreateMultiSigWalletDto, ApproveTransactionDto, UpdateThresholdDto, CreateMultiSigTransactionDto, RejectTransactionDto } from 'src/modules/stellar/multisig/dto/multisig.dto';
+import { MultiSigWalletService } from '#src/modules/stellar/multisig/services/multisig-wallet.service';
+import { MultiSigWallet, MultiSigWalletStatus } from '#src/modules/stellar/multisig/entities/multisig-wallet.entity';
+import { MultiSigSigner, SignerRole, SignerStatus } from '#src/modules/stellar/multisig/entities/multisig-signer.entity';
+import { MultiSigTransaction, MultiSigTransactionStatus, MultiSigTransactionType } from '#src/modules/stellar/multisig/entities/multisig-transaction.entity';
+import { MultiSigSignature, SignatureStatus } from '#src/modules/stellar/multisig/entities/multisig-signature.entity';
+import { CreateMultiSigWalletDto, ApproveTransactionDto, UpdateThresholdDto, CreateMultiSigTransactionDto, RejectTransactionDto } from '#src/modules/stellar/multisig/dto/multisig.dto';
 
 describe('MultiSigWalletService', () => {
   let service: MultiSigWalletService;

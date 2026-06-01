@@ -18,7 +18,7 @@ import {
   DisputeStatus,
 } from '../config/types';
 
-let db: Database.Database;
+let db: Database.Database | undefined;
 
 // ── Initialization ────────────────────────────────────────────────────────────
 
@@ -162,13 +162,6 @@ export function setCursor(ledger: number): void {
 
 // ── Quest operations ──────────────────────────────────────────────────────────
 
-const upsertQuest = db?.prepare(`
-  INSERT INTO quests (id, creator, reward_asset, reward_amount, verifier, deadline, status, total_claims, created_at, created_in_ledger)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  ON CONFLICT(id) DO UPDATE SET
-    status = excluded.status,
-    total_claims = excluded.total_claims
-`);
 
 export function saveQuest(q: QuestEntity): void {
   const stmt = getDatabase().prepare(`

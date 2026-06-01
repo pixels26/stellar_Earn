@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { StellarService } from '../../src/modules/stellar/stellar.service';
-import { StellarModule } from '../../src/modules/stellar/stellar.module';
+import { StellarService } from '#src/modules/stellar/stellar.service';
+import { StellarModule } from '#src/modules/stellar/stellar.module';
 import { Keypair } from 'stellar-sdk';
-import stellarConfig from '../../src/config/stellar.config';
+import stellarConfig from '#src/config/stellar.config';
 
 describe('StellarService Integration', () => {
   let service: StellarService;

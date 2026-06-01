@@ -20,8 +20,10 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "allowUnreachableCode": false,
     "paths": {
-      "src/*": ["./src/*"]
+      "src/*": ["src/*"],
+      "#src/*": ["src/*"]
     }
   },
   "include": ["src/**/*"],

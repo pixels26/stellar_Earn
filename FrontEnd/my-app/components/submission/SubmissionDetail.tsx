@@ -5,22 +5,12 @@ import { StatusBadge } from './StatusBadge';
 import { StatusTimeline } from './StatusTimeline';
 import type { Submission } from '@/lib/types/submission';
 import { FocusTrap } from '@/components/a11y/FocusTrap';
+import { formatDate } from '@/lib/utils/date';
 
 interface SubmissionDetailProps {
   submission: Submission | null;
   isOpen: boolean;
   onClose: () => void;
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export function SubmissionDetail({
@@ -66,23 +56,26 @@ export function SubmissionDetail({
 
   if (!isOpen || !submission) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  const handleBackdropClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // backdrop button covers the container; close when clicked
+    onClose();
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="submission-detail-title"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 border-none p-0"
+        onClick={handleBackdropClick}
+        aria-label="Close submission details"
+        tabIndex={-1}
+      />
       <FocusTrap active={isOpen}>
         <div
           ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submission-detail-title"
           className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-zinc-900"
           tabIndex={-1}
         >
@@ -200,7 +193,7 @@ export function SubmissionDetail({
             </div>
 
             {/* Rejection Reason */}
-            {submission.status === 'REJECTED' && (
+            {submission.status === 'Rejected' && (
               <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
                 <h3 className="text-sm font-semibold text-red-900 dark:text-red-400 mb-1">
                   Rejection Reason
@@ -220,7 +213,7 @@ export function SubmissionDetail({
               >
                 Close
               </button>
-              {submission.status === 'APPROVED' && (
+              {submission.status === 'Approved' && (
                 <button
                   onClick={() => {
                     // TODO: Implement claim reward functionality

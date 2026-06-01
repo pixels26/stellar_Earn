@@ -42,10 +42,10 @@ export class IpWhitelistGuard implements CanActivate {
 
   private getClientIp(request: Request): string {
     return (
-      (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      (request.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
       (request.headers['x-real-ip'] as string) ||
       request.ip ||
-      request.socket?.remoteAddress ||
+      request.socket.remoteAddress ||
       'unknown'
     );
   }

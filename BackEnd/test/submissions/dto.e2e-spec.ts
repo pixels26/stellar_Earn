@@ -1,7 +1,7 @@
-import { validate } from 'class-validator';
+﻿import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { ApproveSubmissionDto } from '../../src/modules/submissions/dto/approve-submission.dto';
-import { RejectSubmissionDto } from '../../src/modules/submissions/dto/reject-submission.dto';
+import { ApproveSubmissionDto } from '#src/modules/submissions/dto/approve-submission.dto';
+import { RejectSubmissionDto } from '#src/modules/submissions/dto/reject-submission.dto';
 
 describe('Submission DTOs (Unit Tests)', () => {
   describe('ApproveSubmissionDto', () => {

@@ -85,16 +85,20 @@ export function Modal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 border-none p-0"
+        onClick={handleBackdropClick}
+        aria-label="Close modal"
+        tabIndex={-1}
+      />
       <FocusTrap active={isOpen} initialFocus={closeButtonRef as any}>
         <div
           ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
           className={`relative w-full ${sizeClasses[size]} rounded-lg bg-white shadow-xl dark:bg-zinc-900 animate-modal-entrance`}
           tabIndex={-1}
         >

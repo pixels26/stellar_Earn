@@ -4,6 +4,9 @@
   "description": "",
   "author": "",
   "private": true,
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
@@ -73,11 +76,12 @@
     "@types/passport-google-oauth20": "^2.0.17",
     "axios": "^1.13.4",
     "bcrypt": "^6.0.0",
-    "bullmq": "^5.70.0",
+    "bullmq": "5.76.6",
     "cache-manager": "^7.2.8",
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "cron": "^4.4.0",
     "csurf": "^1.2.2",
     "dotenv": "^17.3.1",
     "express-rate-limit": "^8.2.1",
@@ -89,7 +93,7 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
-    "pg": "^8.17.1",
+    "pg": "^8.20.0",
     "qrcode": "^1.5.4",
     "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
@@ -153,6 +157,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
+      "^#src/(.*)$": "<rootDir>/src/$1",
       "^src/(.*)$": "<rootDir>/src/$1"
     }
   }

@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
@@ -19,6 +20,7 @@ import {
   PayoutResponseDto,
   PayoutStatsDto,
 } from './dto/payout-query.dto';
+import { FraudRiskRulesService } from './services/fraud-risk-rules.service';
 import {
   encodeCursor,
   decodeCursor,
@@ -28,12 +30,14 @@ import {
 @Injectable()
 export class PayoutsService {
   private readonly logger = new Logger(PayoutsService.name);
+  private readonly settlementRetryDelayMs = 60_000;
 
   constructor(
     @InjectRepository(Payout)
     private readonly payoutRepository: Repository<Payout>,
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly fraudRiskRulesService: FraudRiskRulesService,
   ) {}
 
   // ─── Create ────────────────────────────────────────────────────────────────
@@ -108,34 +112,202 @@ export class PayoutsService {
       return;
     }
 
+    if (payout.transactionHash && payout.stellarLedger) {
+      await this.confirmSettlementFinality(payout);
+      return;
+    }
+
     try {
       const result = await this.executeStellarPayment(payout);
-
-      payout.status = PayoutStatus.COMPLETED;
       payout.transactionHash = result.transactionHash;
       payout.stellarLedger = result.ledger;
-      payout.processedAt = new Date();
       payout.failureReason = null;
 
+      const settlement = await this.getSettlementConfirmationState(
+        result.ledger,
+      );
+
+      payout.settlementConfirmations = settlement.confirmations;
+
+      if (!settlement.isFinal) {
+        payout.status = PayoutStatus.PROCESSING;
+        payout.nextRetryAt = new Date(Date.now() + this.settlementRetryDelayMs);
+        await this.payoutRepository.save(payout);
+        this.logger.log(
+          `Payout ${payoutId} submitted and waiting for settlement finality (${settlement.confirmations}/${settlement.requiredConfirmations} confirmations)`,
+        );
+        return;
+      }
+
+      this.markPayoutCompleted(payout);
       await this.payoutRepository.save(payout);
       this.logger.log(`Payout ${payoutId} completed successfully`);
 
-      this.eventEmitter.emit(
-        'payout.processed',
-        new PayoutProcessedEvent(
-          payout.id,
-          payout.stellarAddress,
-          payout.amount.toString(),
-          result.transactionHash,
-        ),
-      );
+      this.emitPayoutProcessed(payout);
     } catch (error) {
+      if (payout.transactionHash && payout.stellarLedger) {
+        payout.status = PayoutStatus.PROCESSING;
+        payout.failureReason = error.message || 'Settlement confirmation failed';
+        payout.nextRetryAt = new Date(Date.now() + this.settlementRetryDelayMs);
+        await this.payoutRepository.save(payout);
+        this.logger.warn(
+          `Payout ${payout.id} transaction submitted but settlement confirmation is unavailable; retry scheduled`,
+        );
+        return;
+      }
+
       this.eventEmitter.emit(
         'payout.failed',
         new PayoutFailedEvent(payout.id, payout.stellarAddress, error.message),
       );
       await this.handlePayoutFailure(payout, error);
     }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async confirmPendingSettlements(): Promise<void> {
+    const pendingSettlements = await this.payoutRepository.find({
+      where: {
+        status: PayoutStatus.PROCESSING,
+        nextRetryAt: LessThanOrEqual(new Date()),
+      },
+      take: 10,
+    });
+
+    const submittedPayouts = pendingSettlements.filter(
+      (payout) => payout.transactionHash && payout.stellarLedger,
+    );
+
+    if (submittedPayouts.length === 0) return;
+
+    this.logger.log(
+      `Checking settlement finality for ${submittedPayouts.length} payouts`,
+    );
+
+    for (const payout of submittedPayouts) {
+      try {
+        await this.confirmSettlementFinality(payout);
+      } catch (error) {
+        this.logger.error(
+          `Settlement confirmation failed for payout ${payout.id}`,
+          error,
+        );
+      }
+    }
+  }
+
+  private async confirmSettlementFinality(payout: Payout): Promise<void> {
+    if (!payout.stellarLedger) {
+      throw new Error(`Payout ${payout.id} is missing its settlement ledger`);
+    }
+
+    const settlement = await this.getSettlementConfirmationState(
+      payout.stellarLedger,
+    );
+
+    payout.settlementConfirmations = settlement.confirmations;
+
+    if (!settlement.isFinal) {
+      payout.nextRetryAt = new Date(Date.now() + this.settlementRetryDelayMs);
+      await this.payoutRepository.save(payout);
+      this.logger.log(
+        `Payout ${payout.id} settlement still pending (${settlement.confirmations}/${settlement.requiredConfirmations} confirmations)`,
+      );
+      return;
+    }
+
+    this.markPayoutCompleted(payout);
+    await this.payoutRepository.save(payout);
+    this.emitPayoutProcessed(payout);
+    this.logger.log(`Payout ${payout.id} settlement finality confirmed`);
+  }
+
+  private async getSettlementConfirmationState(
+    submittedLedger: number,
+  ): Promise<{
+    confirmations: number;
+    requiredConfirmations: number;
+    isFinal: boolean;
+  }> {
+    const configuredConfirmations = Number(
+      this.configService.get<number | string>(
+        'STELLAR_FINALITY_CONFIRMATIONS',
+        3,
+      ),
+    );
+    const requiredConfirmations = Math.max(
+      1,
+      Number.isFinite(configuredConfirmations) ? configuredConfirmations : 3,
+    );
+    const currentLedger = await this.getCurrentStellarLedger();
+    const confirmations = Math.max(0, currentLedger - submittedLedger + 1);
+
+    return {
+      confirmations,
+      requiredConfirmations,
+      isFinal: confirmations >= requiredConfirmations,
+    };
+  }
+
+  private async getCurrentStellarLedger(): Promise<number> {
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    const mockLedger = Number(
+      this.configService.get<number | string>(
+        'STELLAR_MOCK_CURRENT_LEDGER',
+      ),
+    );
+
+    if (Number.isInteger(mockLedger) && mockLedger > 0) {
+      return mockLedger;
+    }
+
+    if (nodeEnv === 'development' || nodeEnv === 'test') {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const horizonUrl =
+      this.configService.get<string>('STELLAR_HORIZON_URL') ||
+      this.configService.get<string>('HORIZON_URL') ||
+      'https://horizon.stellar.org';
+
+    const response = await fetch(`${horizonUrl}/ledgers?order=desc&limit=1`);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(
+        'Unable to confirm Stellar settlement finality',
+      );
+    }
+
+    const payload = await response.json();
+    const latestLedger = Number(
+      payload?._embedded?.records?.[0]?.sequence,
+    );
+
+    if (!Number.isInteger(latestLedger) || latestLedger <= 0) {
+      throw new ServiceUnavailableException(
+        'Stellar ledger response did not include a valid ledger sequence',
+      );
+    }
+
+    return latestLedger;
+  }
+
+  private markPayoutCompleted(payout: Payout): void {
+    payout.status = PayoutStatus.COMPLETED;
+    payout.processedAt = new Date();
+    payout.settlementConfirmedAt = new Date();
+    payout.nextRetryAt = null;
+  }
+
+  private emitPayoutProcessed(payout: Payout): void {
+    this.eventEmitter.emit(
+      'payout.processed',
+      new PayoutProcessedEvent(
+        payout.id,
+        payout.stellarAddress,
+        payout.amount.toString(),
+        payout.transactionHash ?? '',
+      ),
+    );
   }
 
   // ─── Stellar ───────────────────────────────────────────────────────────────
@@ -341,13 +513,12 @@ export class PayoutsService {
       .getRawOne();
 
     return {
-      totalPayouts: parseInt(stats.totalPayouts, 10),
+      total: parseInt(stats.totalPayouts, 10),
       totalAmount: parseFloat(stats.totalAmount),
-      pendingPayouts: parseInt(stats.pendingPayouts, 10),
-      pendingAmount: parseFloat(stats.pendingAmount),
-      completedPayouts: parseInt(stats.completedPayouts, 10),
-      completedAmount: parseFloat(stats.completedAmount),
-      failedPayouts: parseInt(stats.failedPayouts, 10),
+      pendingCount: parseInt(stats.pendingPayouts, 10),
+      completedCount: parseInt(stats.completedPayouts, 10),
+      failedCount: parseInt(stats.failedPayouts, 10),
+      asset: 'XLM',
     };
   }
 
@@ -391,6 +562,8 @@ export class PayoutsService {
       submissionId: payout.submissionId,
       transactionHash: payout.transactionHash,
       stellarLedger: payout.stellarLedger,
+      settlementConfirmations: payout.settlementConfirmations,
+      settlementConfirmedAt: payout.settlementConfirmedAt,
       failureReason: payout.failureReason,
       retryCount: payout.retryCount,
       processedAt: payout.processedAt,

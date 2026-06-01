@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { FilterTab } from '@/lib/hooks/useQuestFilter';
 
 interface QuestFilterTabsProps {

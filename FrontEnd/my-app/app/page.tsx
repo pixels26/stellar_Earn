@@ -21,7 +21,7 @@ export default function Home() {
         <HowItWorks />
       </ComponentErrorBoundary>
 
-      {/* Featured Quests */}
+      {/* Featured Quests - Has built-in APIBootstrapErrorBoundary for API bootstrap failure handling */}
       <ComponentErrorBoundary componentName="FeaturedQuests">
         <FeaturedQuests />
       </ComponentErrorBoundary>

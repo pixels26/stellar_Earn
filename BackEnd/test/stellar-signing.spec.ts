@@ -1,6 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { StellarService } from '../src/modules/stellar/stellar.service';
+import { StellarService } from '#src/modules/stellar/stellar.service';
 import { Account, Asset, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 
 describe('Transaction Signing Security', () => {

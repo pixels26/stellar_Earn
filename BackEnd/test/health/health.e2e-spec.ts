@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { ConfigModule } from '@nestjs/config';
-import { API_VERSION_CONFIG, extractApiVersion } from '../../src/config/versioning.config';
-import { HealthController } from '../../src/modules/health/health.controller';
-import { DatabaseHealthService } from '../../src/modules/health/services/database-health.service';
-import { CacheHealthService } from '../../src/modules/health/services/cache-health.service';
-import { ExternalHealthService } from '../../src/modules/health/services/external-health.service';
-import { HealthCheckResult } from '../../src/modules/health/types/health.types';
+import { API_VERSION_CONFIG, extractApiVersion } from '#src/config/versioning.config';
+import { HealthController } from '#src/modules/health/health.controller';
+import { DatabaseHealthService } from '#src/modules/health/services/database-health.service';
+import { CacheHealthService } from '#src/modules/health/services/cache-health.service';
+import { ExternalHealthService } from '#src/modules/health/services/external-health.service';
+import { HealthCheckResult } from '#src/modules/health/types/health.types';
 
 const mockDatabaseHealth = {
   check: jest.fn(),

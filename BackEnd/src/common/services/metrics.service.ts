@@ -197,6 +197,11 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     this.registerCounter('job_dead_letter_jobs_total', 'Total background jobs moved to the dead letter queue');
     this.registerGauge('dead_letter_queue_size', 'Number of jobs currently in the dead letter queue');
     this.registerHistogram('job_processing_duration_ms', 'Background job processing duration in milliseconds');
+    
+    // Smart Contract Invocations & Telemetry
+    this.registerCounter('stellar_contract_invocations_total', 'Total smart contract invocations');
+    this.registerCounter('stellar_contract_invocation_failures_total', 'Total smart contract invocation failures');
+    this.registerHistogram('stellar_contract_invocation_duration_ms', 'Smart contract invocation latency in milliseconds');
   }
 
   private startSystemCollection(): void {

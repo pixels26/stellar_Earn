@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { Keypair } from 'stellar-sdk';
 import { DataSource } from 'typeorm';
 import {
   Quest,
   QuestStatus,
-} from '../../src/modules/analytics/entities/quest.entity';
+} from '#src/modules/analytics/entities/quest.entity';
 import {
   Submission,
   SubmissionStatus,
-} from '../../src/modules/analytics/entities/submission.entity';
-import { Payout } from '../../src/modules/analytics/entities/payout.entity';
-import { User } from 'src/modules/users/entities/user.entity';
+} from '#src/modules/analytics/entities/submission.entity';
+import { Payout } from '#src/modules/analytics/entities/payout.entity';
+import { User } from '#src/modules/users/entities/user.entity';
 
 describe('Analytics (e2e)', () => {
   let app: INestApplication;
@@ -435,6 +435,90 @@ describe('Analytics (e2e)', () => {
         .query({ limit: 0 })
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(400);
+    });
+  });
+
+  describe('Streaming Exports', () => {
+    it('should stream quests as CSV for admin', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/quests')
+        .query({ format: 'csv' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect('Content-Type', /text\/csv/)
+        .expect((res) => {
+          expect(res.text).toContain('ID,Contract Quest ID,Title,Reward Asset,Reward Amount');
+          expect(res.text).toContain('Test Quest 0');
+        });
+    });
+
+    it('should stream quests as JSON for admin', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/quests')
+        .query({ format: 'json' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        .expect((res) => {
+          const parsed = JSON.parse(res.text);
+          expect(Array.isArray(parsed)).toBe(true);
+          expect(parsed.length).toBeGreaterThan(0);
+          expect(parsed[0]).toHaveProperty('title');
+        });
+    });
+
+    it('should stream quests as JSONL for admin', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/quests')
+        .query({ format: 'jsonl' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect('Content-Type', /application\/x-ndjson/)
+        .expect((res) => {
+          const lines = res.text.trim().split('\n');
+          expect(lines.length).toBeGreaterThan(0);
+          const parsed = JSON.parse(lines[0]);
+          expect(parsed).toHaveProperty('title');
+        });
+    });
+
+    it('should stream users as CSV for admin', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/users')
+        .query({ format: 'csv' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect('Content-Type', /text\/csv/)
+        .expect((res) => {
+          expect(res.text).toContain('ID,Stellar Address,Username,Email,Role');
+          expect(res.text).toContain('testuser0');
+        });
+    });
+
+    it('should stream submissions as CSV for admin', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/submissions')
+        .query({ format: 'csv' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .expect('Content-Type', /text\/csv/)
+        .expect((res) => {
+          expect(res.text).toContain('ID,Contract Submission ID,Quest ID,User ID,Proof Hash');
+          expect(res.text).toContain('hash-0');
+        });
+    });
+
+    it('should reject non-admin users for exports', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/quests')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(403);
+    });
+
+    it('should reject requests without token for exports', () => {
+      return request(app.getHttpServer())
+        .get('/analytics/export/quests')
+        .expect(401);
     });
   });
 });

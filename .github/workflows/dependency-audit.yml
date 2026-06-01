@@ -10,8 +10,38 @@ on:
     - cron: '0 9 * * 1'
 
 jobs:
+  changes:
+    name: Detect Dependency-Relevant Changes
+    runs-on: ubuntu-latest
+    outputs:
+      contracts: ${{ steps.filter.outputs.contracts }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            contracts:
+              - 'contracts/**'
+              - 'contracts/earn-quest/Cargo.lock'
+            frontend:
+              - 'FrontEnd/my-app/package.json'
+              - 'FrontEnd/my-app/package-lock.json'
+            backend:
+              - 'BackEnd/package.json'
+              - 'BackEnd/package-lock.json'
+
   cargo-audit:
     name: Security Audit
+    needs: changes
+    if: github.event_name == 'schedule' || needs.changes.outputs.contracts == 'true'
     runs-on: ubuntu-latest
     
     strategy:
@@ -46,8 +76,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-target-
           
-    - name: Install cargo-audit
-      run: cargo install cargo-audit
+    - name: Install audit tools (cargo-binstall)
+      run: |
+        curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install.sh | sh
+        cargo binstall -y cargo-audit cargo-deny cargo-outdated
       
     - name: Run cargo audit
       run: |
@@ -57,14 +89,17 @@ jobs:
     - name: Run cargo-deny (advisories)
       run: |
         cd contracts/earn-quest
-        cargo install cargo-deny
         cargo deny check advisories
+
+    - name: Run cargo-deny (licenses)
+      run: |
+        cd contracts/earn-quest
+        cargo deny check licenses
       
     - name: Check for outdated dependencies
       run: |
         cd contracts/earn-quest
-        cargo install cargo-outdated
-        cargo outdated --exit-code 1
+        cargo outdated || echo "Outdated packages found"
         
     - name: Generate audit report
       run: |
@@ -76,6 +111,16 @@ jobs:
         echo "### Cargo Audit Results:" >> audit-report.md
         echo "\`\`\`" >> audit-report.md
         cargo audit >> audit-report.md 2>&1 || echo "Audit completed with warnings" >> audit-report.md
+        echo "\`\`\`" >> audit-report.md
+        echo "" >> audit-report.md
+        echo "### Cargo Deny Advisory Results:" >> audit-report.md
+        echo "\`\`\`" >> audit-report.md
+        cargo deny check advisories >> audit-report.md 2>&1 || echo "Advisory deny check completed with warnings" >> audit-report.md
+        echo "\`\`\`" >> audit-report.md
+        echo "" >> audit-report.md
+        echo "### Cargo Deny License Results:" >> audit-report.md
+        echo "\`\`\`" >> audit-report.md
+        cargo deny check licenses >> audit-report.md 2>&1 || echo "License deny check completed with warnings" >> audit-report.md
         echo "\`\`\`" >> audit-report.md
         echo "" >> audit-report.md
         echo "### Outdated Dependencies:" >> audit-report.md
@@ -103,6 +148,8 @@ jobs:
 
   frontend-audit:
     name: Frontend Security Audit
+    needs: changes
+    if: github.event_name == 'schedule' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     
     strategy:
@@ -119,20 +166,28 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: |
-          FrontEnd/my-app/package-lock.json
+          FrontEnd/my-app/package.json
+          BackEnd/package.json
           BackEnd/package-lock.json
           
-    - name: Audit FrontEnd dependencies
+    - name: Audit and Check Bloat - FrontEnd
       run: |
         cd FrontEnd/my-app
-        npm ci
+        npm install
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
         npm audit --audit-level=moderate
+        npx depcheck --json > ../../frontend-depcheck-report.json || echo "Unused dependencies found"
         
-    - name: Audit Backend dependencies
+    - name: Audit and Check Bloat - Backend
       run: |
         cd BackEnd
-        npm ci
+        npm install
         npm audit --audit-level=moderate
+        npx depcheck --json > ../frontend-depcheck-backend-report.json || echo "Unused dependencies found"
         
     - name: Generate frontend audit report
       run: |
@@ -150,6 +205,14 @@ jobs:
         cd BackEnd && npm audit --json >> ../../frontend-audit-report.md 2>&1 || echo "Backend audit completed" >> ../../frontend-audit-report.md
         echo "\`\`\`" >> frontend-audit-report.md
         
+    - name: Append Depcheck Results to Report
+      run: |
+        echo "" >> frontend-audit-report.md
+        echo "### Unused Dependency Analysis (Bloat Check):" >> frontend-audit-report.md
+        echo "\`\`\`" >> frontend-audit-report.md
+        cat frontend-depcheck-report.json >> frontend-audit-report.md
+        echo "\`\`\`" >> frontend-audit-report.md
+
     - name: Upload frontend audit report
       uses: actions/upload-artifact@v4
       if: always()

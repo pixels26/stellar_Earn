@@ -30,8 +30,8 @@ export function RequirementsList({
             Requirements
           </h4>
           <ul className="space-y-2">
-            {requirements.map((requirement, index) => (
-              <li key={index} className="flex items-start gap-3">
+            {requirements.map((requirement) => (
+              <li key={requirement} className="flex items-start gap-3">
                 <div className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#089ec3]/10">
                   <svg
                     className="h-3 w-3 text-[#089ec3]"

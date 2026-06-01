@@ -20,6 +20,8 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { Response } from 'express';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,17 +29,19 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { PlatformAnalyticsService } from './services/platform-analytics.service';
 import { QuestAnalyticsService } from './services/quest-analytics.service';
 import { UserAnalyticsService } from './services/user-analytics.service';
-import { AnalyticsReportService, ReportGenerationOptions, ReportQueryOptions } from './services/report.service';
-import { AnalyticsAggregationService, BatchAggregationOptions } from './services/aggregation.service';
+import { StreamExportService } from './services/stream-export.service';
 import { PlatformStatsDto } from './dto/platform-stats.dto';
 import { QuestAnalyticsDto } from './dto/quest-analytics.dto';
 import { UserAnalyticsDto } from './dto/user-analytics.dto';
-import { AnalyticsQueryDto, QuestAnalyticsQueryDto, UserAnalyticsQueryDto, Granularity } from './dto/analytics-query.dto';
-import { ReportGenerationDto, ReportQueryDto, AggregationOptionsDto, BatchAggregationDto } from './dto/report.dto';
-import { ReportType, ReportFormat } from './entities/analytics-report.entity';
-import { SnapshotType } from './entities/analytics-snapshot.entity';
-import { Role } from '../../common/enums/role.enum';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  AnalyticsQueryDto,
+  QuestAnalyticsQueryDto,
+  UserAnalyticsQueryDto,
+} from './dto/analytics-query.dto';
+import { ExportQueryDto, ExportFormat } from './dto/export-query.dto';
+import { User, UserRole } from '../users/entities/user.entity';
+import { Quest } from './entities/quest.entity';
+import { Submission } from './entities/submission.entity';
 
 @ApiTags('Analytics')
 @Controller('analytics')
@@ -50,8 +54,13 @@ export class AnalyticsController {
     private readonly platformAnalyticsService: PlatformAnalyticsService,
     private readonly questAnalyticsService: QuestAnalyticsService,
     private readonly userAnalyticsService: UserAnalyticsService,
-    private readonly reportService: AnalyticsReportService,
-    private readonly aggregationService: AnalyticsAggregationService,
+    private readonly streamExportService: StreamExportService,
+    @InjectRepository(Quest)
+    private readonly questRepository: Repository<Quest>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Submission)
+    private readonly submissionRepository: Repository<Submission>,
   ) {}
 
   @Get('platform')
@@ -145,348 +154,270 @@ export class AnalyticsController {
     return this.userAnalyticsService.getUserAnalytics(query);
   }
 
-  // Report Management Endpoints
-
-  @Post('reports')
-  @HttpCode(HttpStatus.CREATED)
-  @RateLimit({ limit: 5, ttlSeconds: 300 }) // 5 reports per 5 minutes
-  @ApiOperation({
-    summary: 'Generate a new analytics report',
-    description: 'Creates and generates an analytics report in the specified format. Report generation happens asynchronously.',
-  })
-  @ApiBody({
-    description: 'Report generation options',
-    schema: {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: Object.values(ReportType) },
-        format: { type: 'string', enum: Object.values(ReportFormat) },
-        parameters: { type: 'object' },
-        filters: { type: 'object' },
-        startDate: { type: 'string', format: 'date' },
-        endDate: { type: 'string', format: 'date' },
-      },
-      required: ['type', 'format', 'startDate', 'endDate'],
-    },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Report generation started successfully',
-  })
-  async generateReport(
-    @Body() options: ReportGenerationDto,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    const reportOptions: ReportGenerationOptions = {
-      ...options,
-      parameters: options.parameters || {},
-      filters: options.filters || {},
-      startDate: new Date(options.startDate),
-      endDate: new Date(options.endDate),
-      generatedBy: user,
-    };
-
-    const report = await this.reportService.generateReport(reportOptions);
-    return {
-      id: report.id,
-      status: report.status,
-      message: 'Report generation started. Check status with GET /analytics/reports/:id',
-    };
-  }
-
-  @Get('reports')
+  @Get('export/quests')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Query analytics reports',
-    description: 'Returns a list of analytics reports with optional filtering.',
+    summary: 'Export quest performance metrics',
+    description: 'Streams quest metrics as CSV, JSON, or JSONL file. Admin-only endpoint.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Reports retrieved successfully',
+    description: 'Quest metrics exported successfully',
   })
-  async queryReports(@Query() options: ReportQueryDto): Promise<any> {
-    const queryOptions = {
-      ...options,
-      startDate: options.startDate ? new Date(options.startDate) : undefined,
-      endDate: options.endDate ? new Date(options.endDate) : undefined,
-    };
-    return this.reportService.queryReports(queryOptions);
-  }
-
-  @Get('reports/:id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Get report details',
-    description: 'Returns detailed information about a specific analytics report.',
-  })
-  @ApiParam({ name: 'id', description: 'Report ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Report details retrieved successfully',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Report not found',
-  })
-  async getReport(@Param('id') id: string): Promise<any> {
-    return this.reportService.getReportById(id);
-  }
-
-  @Get('reports/:id/export')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Export report data',
-    description: 'Downloads the report data in the original format.',
-  })
-  @ApiParam({ name: 'id', description: 'Report ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Report exported successfully',
-  })
-  async exportReport(
-    @Param('id') id: string,
+  async exportQuests(
+    @Query() query: ExportQueryDto,
     @Res() res: Response,
   ): Promise<void> {
-    const exportResult = await this.reportService.exportReport(id, ReportFormat.JSON);
+    const queryBuilder = this.questRepository.createQueryBuilder('quest');
 
-    res.setHeader('Content-Type', exportResult.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${exportResult.fileName}"`);
-    res.send(exportResult.data);
+    if (query.startDate) {
+      queryBuilder.andWhere('quest.createdAt >= :startDate', {
+        startDate: new Date(query.startDate),
+      });
+    }
+    if (query.endDate) {
+      queryBuilder.andWhere('quest.createdAt <= :endDate', {
+        endDate: new Date(query.endDate),
+      });
+    }
+
+    queryBuilder.orderBy('quest.createdAt', 'DESC');
+
+    const iterator = this.streamExportService.getQueryIterator(queryBuilder);
+
+    const questColumns = [
+      { key: 'id', header: 'ID' },
+      { key: 'contractQuestId', header: 'Contract Quest ID' },
+      { key: 'title', header: 'Title' },
+      { key: 'rewardAsset', header: 'Reward Asset' },
+      { key: 'rewardAmount', header: 'Reward Amount' },
+      { key: 'verifierAddress', header: 'Verifier Address' },
+      { key: 'deadline', header: 'Deadline' },
+      { key: 'status', header: 'Status' },
+      { key: 'totalClaims', header: 'Total Claims' },
+      { key: 'totalSubmissions', header: 'Total Submissions' },
+      { key: 'approvedSubmissions', header: 'Approved Submissions' },
+      { key: 'rejectedSubmissions', header: 'Rejected Submissions' },
+      { key: 'createdAt', header: 'Created At' },
+    ];
+
+    async function* mappedQuestIterator() {
+      for await (const q of iterator) {
+        yield {
+          id: q.id,
+          contractQuestId: q.contractQuestId || '',
+          title: q.title || '',
+          rewardAsset: q.rewardAsset || '',
+          rewardAmount: q.rewardAmount || '0',
+          verifierAddress: q.verifierAddress || '',
+          deadline: q.deadline ? q.deadline.toISOString() : '',
+          status: q.status || '',
+          totalClaims: q.totalClaims || 0,
+          totalSubmissions: q.totalSubmissions || 0,
+          approvedSubmissions: q.approvedSubmissions || 0,
+          rejectedSubmissions: q.rejectedSubmissions || 0,
+          createdAt: q.createdAt ? q.createdAt.toISOString() : '',
+        };
+      }
+    }
+
+    const filename = `quests-export-${Date.now()}`;
+    if (query.format === ExportFormat.CSV) {
+      await this.streamExportService.streamAsCSV(
+        res,
+        mappedQuestIterator(),
+        filename,
+        questColumns,
+      );
+    } else if (query.format === ExportFormat.JSONL) {
+      await this.streamExportService.streamAsJSONLines(
+        res,
+        mappedQuestIterator(),
+        filename,
+      );
+    } else {
+      await this.streamExportService.streamAsJSON(
+        res,
+        mappedQuestIterator(),
+        filename,
+      );
+    }
   }
 
-  @Delete('reports/:id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Delete a report',
-    description: 'Deletes an analytics report and its associated data.',
-  })
-  @ApiParam({ name: 'id', description: 'Report ID' })
-  @ApiResponse({
-    status: 204,
-    description: 'Report deleted successfully',
-  })
-  async deleteReport(@Param('id') id: string): Promise<void> {
-    await this.reportService.deleteReport(id);
-  }
-
-  // Aggregation Management Endpoints
-
-  @Post('aggregation/batch')
+  @Get('export/users')
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 2, ttlSeconds: 3600 }) // 2 batch aggregations per hour
   @ApiOperation({
-    summary: 'Run batch analytics aggregation',
-    description: 'Triggers aggregation of analytics data for the specified types and date range.',
-  })
-  @ApiBody({
-    description: 'Batch aggregation options',
-    schema: {
-      type: 'object',
-      properties: {
-        startDate: { type: 'string', format: 'date' },
-        endDate: { type: 'string', format: 'date' },
-        granularity: { type: 'string', enum: ['hourly', 'daily', 'weekly', 'monthly'] },
-        types: { type: 'array', items: { type: 'string', enum: ['platform', 'quest', 'user'] } },
-        organizationId: { type: 'string' },
-      },
-      required: ['startDate', 'endDate'],
-    },
+    summary: 'Export user engagement metrics',
+    description: 'Streams user metrics as CSV, JSON, or JSONL file. Admin-only endpoint.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Batch aggregation completed successfully',
+    description: 'User metrics exported successfully',
   })
-  async runBatchAggregation(@Body() options: BatchAggregationDto): Promise<any> {
-    const transformedOptions = {
-      ...options,
-      granularity: options.granularity || 'daily',
-      types: options.types?.map(t => t as SnapshotType),
-      startDate: new Date(options.startDate),
-      endDate: new Date(options.endDate),
-    };
-    const result = await this.aggregationService.runBatchAggregation(transformedOptions);
-    return {
-      ...result,
-      message: `Processed ${result.processed} snapshots, skipped ${result.skipped}, ${result.errors} errors`,
-    };
+  async exportUsers(
+    @Query() query: ExportQueryDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (query.startDate) {
+      queryBuilder.andWhere('user.createdAt >= :startDate', {
+        startDate: new Date(query.startDate),
+      });
+    }
+    if (query.endDate) {
+      queryBuilder.andWhere('user.createdAt <= :endDate', {
+        endDate: new Date(query.endDate),
+      });
+    }
+
+    queryBuilder.orderBy('user.createdAt', 'DESC');
+
+    const iterator = this.streamExportService.getQueryIterator(queryBuilder);
+
+    const userColumns = [
+      { key: 'id', header: 'ID' },
+      { key: 'stellarAddress', header: 'Stellar Address' },
+      { key: 'username', header: 'Username' },
+      { key: 'email', header: 'Email' },
+      { key: 'role', header: 'Role' },
+      { key: 'xp', header: 'XP' },
+      { key: 'level', header: 'Level' },
+      { key: 'questsCompleted', header: 'Quests Completed' },
+      { key: 'failedQuests', header: 'Failed Quests' },
+      { key: 'successRate', header: 'Success Rate' },
+      { key: 'totalEarned', header: 'Total Earned' },
+      { key: 'lastActiveAt', header: 'Last Active At' },
+      { key: 'createdAt', header: 'Created At' },
+    ];
+
+    async function* mappedUserIterator() {
+      for await (const u of iterator) {
+        yield {
+          id: u.id,
+          stellarAddress: u.stellarAddress || '',
+          username: u.username || '',
+          email: u.email || '',
+          role: u.role || '',
+          xp: u.xp || 0,
+          level: u.level || 0,
+          questsCompleted: u.questsCompleted || 0,
+          failedQuests: u.failedQuests || 0,
+          successRate: u.successRate || 0,
+          totalEarned: u.totalEarned || '0',
+          lastActiveAt: u.lastActiveAt ? u.lastActiveAt.toISOString() : '',
+          createdAt: u.createdAt ? u.createdAt.toISOString() : '',
+        };
+      }
+    }
+
+    const filename = `users-export-${Date.now()}`;
+    if (query.format === ExportFormat.CSV) {
+      await this.streamExportService.streamAsCSV(
+        res,
+        mappedUserIterator(),
+        filename,
+        userColumns,
+      );
+    } else if (query.format === ExportFormat.JSONL) {
+      await this.streamExportService.streamAsJSONLines(
+        res,
+        mappedUserIterator(),
+        filename,
+      );
+    } else {
+      await this.streamExportService.streamAsJSON(
+        res,
+        mappedUserIterator(),
+        filename,
+      );
+    }
   }
 
-  @Post('aggregation/quest/:questId')
+  @Get('export/submissions')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Aggregate data for a specific quest',
-    description: 'Runs aggregation specifically for the given quest ID.',
-  })
-  @ApiParam({ name: 'questId', description: 'Quest ID' })
-  @ApiBody({
-    description: 'Aggregation options',
-    schema: {
-      type: 'object',
-      properties: {
-        startDate: { type: 'string', format: 'date' },
-        endDate: { type: 'string', format: 'date' },
-        granularity: { type: 'string', enum: ['hourly', 'daily', 'weekly', 'monthly'] },
-      },
-      required: ['startDate', 'endDate'],
-    },
+    summary: 'Export quest submissions data',
+    description: 'Streams quest submissions data as CSV, JSON, or JSONL file. Admin-only endpoint.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Quest aggregation completed successfully',
+    description: 'Quest submissions exported successfully',
   })
-  async aggregateQuestData(
-    @Param('questId') questId: string,
-    @Body() options: AggregationOptionsDto,
-  ): Promise<any> {
-    const processed = await this.aggregationService.aggregateQuestData(questId, {
-      ...options,
-      granularity: options.granularity || 'daily',
-      startDate: new Date(options.startDate),
-      endDate: new Date(options.endDate),
-    });
+  async exportSubmissions(
+    @Query() query: ExportQueryDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const queryBuilder = this.submissionRepository
+      .createQueryBuilder('submission')
+      .leftJoinAndSelect('submission.quest', 'quest')
+      .leftJoinAndSelect('submission.user', 'user');
 
-    return {
-      questId,
-      processed,
-      message: `Processed ${processed} snapshots for quest ${questId}`,
-    };
-  }
+    if (query.startDate) {
+      queryBuilder.andWhere('submission.submittedAt >= :startDate', {
+        startDate: new Date(query.startDate),
+      });
+    }
+    if (query.endDate) {
+      queryBuilder.andWhere('submission.submittedAt <= :endDate', {
+        endDate: new Date(query.endDate),
+      });
+    }
 
-  @Post('aggregation/user/:userId')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Aggregate data for a specific user',
-    description: 'Runs aggregation specifically for the given user ID.',
-  })
-  @ApiParam({ name: 'userId', description: 'User ID' })
-  @ApiBody({
-    description: 'Aggregation options',
-    schema: {
-      type: 'object',
-      properties: {
-        startDate: { type: 'string', format: 'date' },
-        endDate: { type: 'string', format: 'date' },
-        granularity: { type: 'string', enum: ['hourly', 'daily', 'weekly', 'monthly'] },
-      },
-      required: ['startDate', 'endDate'],
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'User aggregation completed successfully',
-  })
-  async aggregateUserData(
-    @Param('userId') userId: string,
-    @Body() options: AggregationOptionsDto,
-  ): Promise<any> {
-    const processed = await this.aggregationService.aggregateUserData(userId, {
-      ...options,
-      granularity: options.granularity || 'daily',
-      startDate: new Date(options.startDate),
-      endDate: new Date(options.endDate),
-    });
+    queryBuilder.orderBy('submission.submittedAt', 'DESC');
 
-    return {
-      userId,
-      processed,
-      message: `Processed ${processed} snapshots for user ${userId}`,
-    };
-  }
+    const iterator = this.streamExportService.getQueryIterator(queryBuilder);
 
-  @Get('aggregation/stats')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Get aggregation statistics',
-    description: 'Returns statistics about the analytics snapshots and aggregation status.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Aggregation statistics retrieved successfully',
-  })
-  async getAggregationStats(): Promise<any> {
-    return this.aggregationService.getAggregationStats();
-  }
+    const submissionColumns = [
+      { key: 'id', header: 'ID' },
+      { key: 'contractSubmissionId', header: 'Contract Submission ID' },
+      { key: 'questId', header: 'Quest ID' },
+      { key: 'userId', header: 'User ID' },
+      { key: 'proofHash', header: 'Proof Hash' },
+      { key: 'status', header: 'Status' },
+      { key: 'submittedAt', header: 'Submitted At' },
+      { key: 'reviewedAt', header: 'Reviewed At' },
+      { key: 'paidAt', header: 'Paid At' },
+      { key: 'createdAt', header: 'Created At' },
+    ];
 
-  // Real-time Metrics Endpoints
+    async function* mappedSubmissionIterator() {
+      for await (const sub of iterator) {
+        yield {
+          id: sub.id,
+          contractSubmissionId: sub.contractSubmissionId || '',
+          questId: sub.quest?.id || '',
+          userId: sub.user?.id || '',
+          proofHash: sub.proofHash || '',
+          status: sub.status || '',
+          submittedAt: sub.submittedAt ? sub.submittedAt.toISOString() : '',
+          reviewedAt: sub.reviewedAt ? sub.reviewedAt.toISOString() : '',
+          paidAt: sub.paidAt ? sub.paidAt.toISOString() : '',
+          createdAt: sub.createdAt ? sub.createdAt.toISOString() : '',
+        };
+      }
+    }
 
-  @Get('realtime/platform')
-  @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 20, ttlSeconds: 60 }) // Higher rate limit for real-time data
-  @ApiOperation({
-    summary: 'Get real-time platform metrics',
-    description: 'Returns current platform metrics with minimal caching for real-time dashboards.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Real-time platform metrics retrieved successfully',
-  })
-  async getRealtimePlatformMetrics(): Promise<any> {
-    // Get data for last 24 hours with hourly granularity
-    const endDate = new Date();
-    const startDate = new Date(endDate);
-    startDate.setHours(startDate.getHours() - 24);
-
-    const query: AnalyticsQueryDto = {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      granularity: 'hourly' as Granularity,
-    };
-
-    return this.platformAnalyticsService.getPlatformStats(query);
-  }
-
-  @Get('trending/:metric')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Get trending data for a specific metric',
-    description: 'Returns historical trending data for a specific metric across different time periods.',
-  })
-  @ApiParam({ name: 'metric', description: 'Metric name (e.g., totalUsers, totalQuests)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Trending data retrieved successfully',
-  })
-  async getTrendingData(
-    @Param('metric') metric: string,
-    @Query() query: AnalyticsQueryDto,
-  ): Promise<any> {
-    // This would aggregate data from snapshots for trending analysis
-    // For now, return platform stats as placeholder
-    return this.platformAnalyticsService.getPlatformStats(query);
-  }
-
-  @Get('dashboard/summary')
-  @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 30, ttlSeconds: 60 })
-  @ApiOperation({
-    summary: 'Get dashboard summary data',
-    description: 'Returns aggregated data optimized for dashboard display including KPIs and recent trends.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Dashboard summary retrieved successfully',
-  })
-  async getDashboardSummary(): Promise<any> {
-    // Get data for last 30 days
-    const endDate = new Date();
-    const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - 30);
-
-    const query: AnalyticsQueryDto = {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      granularity: 'daily' as Granularity,
-    };
-
-    const [platformStats, aggregationStats] = await Promise.all([
-      this.platformAnalyticsService.getPlatformStats(query),
-      this.aggregationService.getAggregationStats(),
-    ]);
-
-    return {
-      platformStats,
-      aggregationStats,
-      lastUpdated: new Date(),
-    };
+    const filename = `submissions-export-${Date.now()}`;
+    if (query.format === ExportFormat.CSV) {
+      await this.streamExportService.streamAsCSV(
+        res,
+        mappedSubmissionIterator(),
+        filename,
+        submissionColumns,
+      );
+    } else if (query.format === ExportFormat.JSONL) {
+      await this.streamExportService.streamAsJSONLines(
+        res,
+        mappedSubmissionIterator(),
+        filename,
+      );
+    } else {
+      await this.streamExportService.streamAsJSON(
+        res,
+        mappedSubmissionIterator(),
+        filename,
+      );
+    }
   }
 }

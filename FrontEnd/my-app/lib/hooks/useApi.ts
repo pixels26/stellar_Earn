@@ -259,7 +259,7 @@ export function usePaginatedApi<T>(
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [fetcher, limit]
   );
 

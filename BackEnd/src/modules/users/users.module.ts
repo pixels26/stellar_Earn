@@ -1,23 +1,17 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersService } from './user.service';
-import { UsersController } from './user.controller';
+
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
 import { User } from './entities/user.entity';
-import { Quest } from '../quests/entities/quest.entity';
-import { Submission } from '../submissions/entities/submission.entity';
-import { Payout } from '../payouts/entities/payout.entity';
-import { CacheModule } from '../cache/cache.module';
 import { UserExperienceListener } from './events/user-experience.listener';
-import { DataExport } from './entities/data-export.entity';
-import { DataExportService } from './data-export.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Quest, Submission, Payout, DataExport]),
-    CacheModule,
+    TypeOrmModule.forFeature([User]),
   ],
-  controllers: [UsersController],
-  providers: [UsersService, UserExperienceListener, DataExportService],
-  exports: [UsersService, DataExportService],
+  controllers: [UserController],
+  providers: [UserService, UserExperienceListener],
+  exports: [UserService],
 })
 export class UsersModule {}

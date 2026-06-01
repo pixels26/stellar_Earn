@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { Controller, Get, Param, UseInterceptors } from '@nestjs/common';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { CacheableInterceptor, CacheInvalidateInterceptor, Cacheable, CacheInvalidate } from '../../src/common/decorators/cache.decorator';
+import { CacheableInterceptor, CacheInvalidateInterceptor, Cacheable, CacheInvalidate } from '#src/common/decorators/cache.decorator';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Controller('test')

@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from '../../../src/modules/auth/auth.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { AuthService } from '../../../src/modules/auth/auth.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { User } from '../../../src/modules/users/entities/user.entity';
-import { RefreshToken } from '../../../src/modules/auth/entities/refresh-token.entity';
+import { AuthModule } from '#src/modules/auth/auth.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { AuthService } from '#src/modules/auth/auth.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { User } from '#src/modules/users/entities/user.entity';
+import { RefreshToken } from '#src/modules/auth/entities/refresh-token.entity';
 
 describe('Auth-Users Integration', () => {
   let module: TestingModule;

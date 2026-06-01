@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { DataSource } from 'typeorm';
 
 /**
@@ -13,7 +13,7 @@ import { DataSource } from 'typeorm';
  *   3. Last page has nextCursor === null and hasMore === false
  *   4. No items are duplicated or skipped across pages
  *   5. Invalid cursor is handled gracefully (treated as first page)
- *   6. limit is respected (1 ≤ limit ≤ 100)
+ *   6. limit is respected (1 â‰¤ limit â‰¤ 100)
  */
 describe('Cursor Pagination (e2e)', () => {
   let app: INestApplication;
@@ -22,7 +22,7 @@ describe('Cursor Pagination (e2e)', () => {
   let userToken: string;
   let questId: string;
 
-  // ── Setup ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -68,7 +68,7 @@ describe('Cursor Pagination (e2e)', () => {
     await app.close();
   });
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /** Assert the response has the correct paginated shape */
   function assertPaginatedShape(body: any) {
@@ -104,7 +104,7 @@ describe('Cursor Pagination (e2e)', () => {
     return allItems;
   }
 
-  // ── GET /quests ────────────────────────────────────────────────────────────
+  // â”€â”€ GET /quests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /quests', () => {
     it('returns a paginated shape on first page', async () => {
@@ -185,7 +185,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /quests/:questId/submissions ───────────────────────────────────────
+  // â”€â”€ GET /quests/:questId/submissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /quests/:questId/submissions', () => {
     it('returns a paginated shape', async () => {
@@ -236,7 +236,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /users/search ──────────────────────────────────────────────────────
+  // â”€â”€ GET /users/search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /users/search', () => {
     it('returns a paginated shape', async () => {
@@ -272,7 +272,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /users/leaderboard ─────────────────────────────────────────────────
+  // â”€â”€ GET /users/leaderboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /users/leaderboard', () => {
     it('returns a paginated shape sorted by XP', async () => {
@@ -302,14 +302,14 @@ describe('Cursor Pagination (e2e)', () => {
 
       assertPaginatedShape(page2.body);
 
-      // XP on page 2 should be ≤ lowest XP on page 1
+      // XP on page 2 should be â‰¤ lowest XP on page 1
       const minXpPage1 = Math.min(...page1.body.data.map((u: any) => u.xp));
       const maxXpPage2 = Math.max(...page2.body.data.map((u: any) => u.xp));
       expect(maxXpPage2).toBeLessThanOrEqual(minXpPage1);
     });
   });
 
-  // ── GET /users/:address/quests ─────────────────────────────────────────────
+  // â”€â”€ GET /users/:address/quests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /users/:address/quests', () => {
     it('returns a paginated shape', async () => {
@@ -328,7 +328,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /payouts/history ───────────────────────────────────────────────────
+  // â”€â”€ GET /payouts/history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /payouts/history', () => {
     it('returns a paginated shape', async () => {
@@ -374,7 +374,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /payouts/admin/all ─────────────────────────────────────────────────
+  // â”€â”€ GET /payouts/admin/all â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /payouts/admin/all', () => {
     it('returns a paginated shape (admin only)', async () => {
@@ -406,7 +406,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /notifications ─────────────────────────────────────────────────────
+  // â”€â”€ GET /notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /notifications', () => {
     it('returns a paginated shape', async () => {
@@ -453,7 +453,7 @@ describe('Cursor Pagination (e2e)', () => {
     });
   });
 
-  // ── GET /users/admins/list ─────────────────────────────────────────────────
+  // â”€â”€ GET /users/admins/list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('GET /users/admins/list', () => {
     it('returns a paginated shape (admin only)', async () => {

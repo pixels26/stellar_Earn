@@ -60,7 +60,7 @@ pub struct Submission {
     pub proof_hash: BytesN<32>,
     /// Current status of the submission.
     pub status: SubmissionStatus,
-    /// Unix timestamp when the submission was created.
+    pub claimed_amount: i128,
     pub timestamp: u64,
 }
 
@@ -72,7 +72,7 @@ pub enum SubmissionStatus {
     Pending,
     /// Approved by the verifier, reward can be claimed.
     Approved,
-    /// Rejected by the verifier.
+    PartiallyPaid,
     Rejected,
     /// Reward has been successfully claimed.
     Paid,
@@ -151,7 +151,6 @@ pub struct UserCore {
     pub quests_completed: u32,
 }
 
-
 /// Separate storage entry for a user's badge collection.
 /// Loaded only when badges are displayed or granted.
 #[contracttype]
@@ -176,10 +175,23 @@ pub enum Badge {
     Legend,
 }
 
+/// Definition of a badge type.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BadgeType {
+    /// Unique identifier for the badge type.
+    pub id: Symbol,
+    /// Name of the badge type.
+    pub name: String,
+    /// Description of the badge type.
+    pub description: String,
+    /// XP reward for earning this badge.
+    pub xp_reward: u64,
+}
+
 /// Backward-compatible alias: existing code that references `UserStats` still
 /// compiles.  The `badges` field has moved to `UserBadges`.
 pub type UserStats = UserCore;
-
 // ─────────────────────────────────────────────────────────────────────────────
 // EscrowInfo  →  EscrowBalances  +  EscrowMeta
 // ─────────────────────────────────────────────────────────────────────────────

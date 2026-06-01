@@ -345,7 +345,7 @@ fn test_earn_quest_with_oracle_integration() {
 #[test]
 fn test_external_contract_creates_quest() {
     let env = Env::default();
-    env.mock_all_auths();
+    env.mock_all_auths_allowing_non_root_auth();
 
     let (earn_quest_addr, earn_quest_client) = setup_earn_quest(&env);
     let external_addr = setup_external_contract(&env);
@@ -414,7 +414,7 @@ fn test_external_contract_queries_quest_status() {
 #[test]
 fn test_external_contract_submits_proof() {
     let env = Env::default();
-    env.mock_all_auths();
+    env.mock_all_auths_allowing_non_root_auth();
 
     let (earn_quest_addr, earn_quest_client) = setup_earn_quest(&env);
     let external_addr = setup_external_contract(&env);
@@ -475,8 +475,8 @@ fn test_aggregator_combines_user_xp() {
     client2.initialize(&admin);
 
     // Grant badges to user in both contracts (awards XP)
-    client1.grant_badge(&admin, &user, &Badge::rookie(&env));
-    client2.grant_badge(&admin, &user, &Badge::explorer(&env));
+    client1.grant_badge(&admin, &user, &Badge::Rookie);
+    client2.grant_badge(&admin, &user, &Badge::Explorer);
 
     // Use aggregator to get total XP
     let aggregator_addr = setup_aggregator_contract(&env);
@@ -552,7 +552,7 @@ fn test_external_contract_handles_quest_not_found() {
 #[should_panic(expected = "Error")]
 fn test_external_contract_handles_duplicate_quest() {
     let env = Env::default();
-    env.mock_all_auths();
+    env.mock_all_auths_allowing_non_root_auth();
 
     let (earn_quest_addr, earn_quest_client) = setup_earn_quest(&env);
     let external_addr = setup_external_contract(&env);
@@ -647,13 +647,13 @@ fn test_cross_contract_badge_management() {
     client.initialize(&admin);
 
     // Grant badge through interface
-    let result = client.try_grant_badge(&admin, &user, &Badge::rookie(&env));
+    let result = client.try_grant_badge(&admin, &user, &Badge::Rookie);
     assert!(result.is_ok());
 
     // Query badges through interface
     let badges = client.get_user_badges(&user);
     assert_eq!(badges.badges.len(), 1);
-    assert_eq!(badges.badges.get(0).unwrap(), Badge::rookie(&env));
+    assert_eq!(badges.badges.get(0).unwrap(), Badge::Rookie);
 }
 
 //================================================================================
@@ -663,7 +663,7 @@ fn test_cross_contract_badge_management() {
 #[test]
 fn test_complete_quest_workflow_via_external_contract() {
     let env = Env::default();
-    env.mock_all_auths();
+    env.mock_all_auths_allowing_non_root_auth();
 
     let (earn_quest_addr, earn_quest_client) = setup_earn_quest(&env);
     let external_addr = setup_external_contract(&env);
@@ -764,7 +764,7 @@ fn test_multi_contract_coordination() {
 #[test]
 fn test_cross_contract_call_overhead() {
     let env = Env::default();
-    env.mock_all_auths();
+    env.mock_all_auths_allowing_non_root_auth();
 
     let (earn_quest_addr, earn_quest_client) = setup_earn_quest(&env);
     let external_addr = setup_external_contract(&env);
@@ -824,9 +824,9 @@ fn test_batch_cross_contract_operations() {
     let user2 = Address::generate(&env);
     let user3 = Address::generate(&env);
 
-    client.grant_badge(&admin, &user1, &Badge::rookie(&env));
-    client.grant_badge(&admin, &user2, &Badge::explorer(&env));
-    client.grant_badge(&admin, &user3, &Badge::veteran(&env));
+    client.grant_badge(&admin, &user1, &Badge::Rookie);
+    client.grant_badge(&admin, &user2, &Badge::Explorer);
+    client.grant_badge(&admin, &user3, &Badge::Veteran);
 
     // Verify all operations succeeded
     assert_eq!(client.get_user_badges(&user1).badges.len(), 1);

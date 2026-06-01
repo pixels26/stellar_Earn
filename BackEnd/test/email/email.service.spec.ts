@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { EmailService } from '../../src/modules/email/email.service';
-import { EmailTemplateEngine } from '../../src/modules/email/templates/template.engine';
-import { JobsService } from '../../src/modules/jobs/jobs.service';
+import { EmailService } from '#src/modules/email/email.service';
+import { EmailTemplateEngine } from '#src/modules/email/templates/template.engine';
+import { JobsService } from '#src/modules/jobs/jobs.service';
 import {
   EmailStatus,
   EmailTemplate,
   EmailPriority,
   SendEmailDto,
-} from '../../src/modules/email/dto/email.dto';
+} from '#src/modules/email/dto/email.dto';
 
 describe('EmailService', () => {
   let service: EmailService;

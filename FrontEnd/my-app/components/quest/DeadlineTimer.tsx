@@ -1,35 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  calculateTimeRemaining,
+  type TimeRemaining,
+} from '@/lib/utils/date';
 
 interface DeadlineTimerProps {
   deadline: string;
   isExpired?: boolean;
-}
-
-interface TimeRemaining {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  total: number;
-}
-
-function calculateTimeRemaining(deadline: string): TimeRemaining {
-  const now = new Date().getTime();
-  const deadlineDate = new Date(deadline).getTime();
-  const total = deadlineDate - now;
-
-  if (total <= 0) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
-  }
-
-  const days = Math.floor(total / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((total % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((total % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((total % (1000 * 60)) / 1000);
-
-  return { days, hours, minutes, seconds, total };
 }
 
 export function DeadlineTimer({
@@ -41,16 +20,25 @@ export function DeadlineTimer({
   );
 
   useEffect(() => {
-    if (isExpired || timeRemaining.total <= 0) return;
+    // Don't start a timer if already expired from props or initial calculation
+    if (isExpired || calculateTimeRemaining(deadline).isExpired) return;
 
     const interval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining(deadline));
+      const next = calculateTimeRemaining(deadline);
+      setTimeRemaining(next);
+      // Stop the interval once the deadline passes
+      if (next.isExpired) {
+        clearInterval(interval);
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [deadline, isExpired, timeRemaining.total]);
+    // Only re-run when the deadline string or the external isExpired flag changes,
+    // not on every tick — avoids interval thrash.
+     
+  }, [deadline, isExpired]);
 
-  if (isExpired || timeRemaining.total <= 0) {
+  if (isExpired || timeRemaining.isExpired) {
     return (
       <div
         role="status"

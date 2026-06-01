@@ -1,9 +1,9 @@
-import { Test } from '@nestjs/testing';
+﻿import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { DataSource } from 'typeorm';
-import { Notification as NotificationDB, NotificationType } from '../../src/modules/notifications/entities/notification.entity';
+import { Notification as NotificationDB, NotificationType } from '#src/modules/notifications/entities/notification.entity';
 
 describe('Notifications (e2e)', () => {
   let app: INestApplication;
@@ -42,7 +42,7 @@ describe('Notifications (e2e)', () => {
     await dataSource.getRepository(NotificationDB).clear();
   });
 
-  it('GET /notifications → empty list', async () => {
+  it('GET /notifications â†’ empty list', async () => {
     const res = await request(app.getHttpServer())
       .get('/notifications')
       .expect(200);

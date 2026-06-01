@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { JobsModule } from '../../../src/modules/jobs/jobs.module';
-import { WebhooksModule } from '../../../src/modules/webhooks/webhooks.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { JobsService } from '../../../src/modules/jobs/jobs.service';
-import { WebhooksService } from '../../../src/modules/webhooks/webhooks.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { User } from '../../../src/modules/users/entities/user.entity';
-import { Job } from '../../../src/modules/jobs/entities/job.entity';
-import { Webhook } from '../../../src/modules/webhooks/entities/webhook.entity';
+import { JobsModule } from '#src/modules/jobs/jobs.module';
+import { WebhooksModule } from '#src/modules/webhooks/webhooks.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { JobsService } from '#src/modules/jobs/jobs.service';
+import { WebhooksService } from '#src/modules/webhooks/webhooks.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { User } from '#src/modules/users/entities/user.entity';
+import { Job } from '#src/modules/jobs/entities/job.entity';
+import { Webhook } from '#src/modules/webhooks/entities/webhook.entity';
 
 describe('Jobs-Webhooks Integration', () => {
   let module: TestingModule;

@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import fc from 'fast-check';
-import { MultiSigPayoutService } from 'src/modules/stellar/multisig/services/multisig-payout.service';
-import { MultiSigWalletService } from 'src/modules/stellar/multisig/services/multisig-wallet.service';
-import { MultiSigTransaction, MultiSigTransactionStatus } from 'src/modules/stellar/multisig/entities/multisig-transaction.entity';
-import { MultiSigWallet, MultiSigWalletStatus } from 'src/modules/stellar/multisig/entities/multisig-wallet.entity';
-import { Payout, PayoutStatus, PayoutType } from 'src/modules/payouts/entities/payout.entity';
+import { MultiSigPayoutService } from '#src/modules/stellar/multisig/services/multisig-payout.service';
+import { MultiSigWalletService } from '#src/modules/stellar/multisig/services/multisig-wallet.service';
+import { MultiSigTransaction, MultiSigTransactionStatus } from '#src/modules/stellar/multisig/entities/multisig-transaction.entity';
+import { MultiSigWallet, MultiSigWalletStatus } from '#src/modules/stellar/multisig/entities/multisig-wallet.entity';
+import { Payout, PayoutStatus, PayoutType } from '#src/modules/payouts/entities/payout.entity';
 
-// ─── Arbitraries ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Arbitraries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** Any payout status that is NOT PENDING */
 const nonPendingPayoutStatus = fc.constantFrom(
@@ -30,7 +30,7 @@ const nonApprovedTransactionStatus = fc.constantFrom(
   MultiSigTransactionStatus.FAILED,
 );
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const makePayout = (overrides: Partial<Payout> = {}): Payout =>
   ({
@@ -107,7 +107,7 @@ const makeWallet = (overrides: Partial<MultiSigWallet> = {}): MultiSigWallet =>
     ...overrides,
   } as MultiSigWallet);
 
-// ─── Test Suite ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Test Suite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('MultiSigPayoutService', () => {
   let service: MultiSigPayoutService;
@@ -169,7 +169,7 @@ describe('MultiSigPayoutService', () => {
     service = module.get<MultiSigPayoutService>(MultiSigPayoutService);
   });
 
-  // ── createPayoutEscrow ────────────────────────────────────────────────────
+  // â”€â”€ createPayoutEscrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('createPayoutEscrow', () => {
     it('should create escrow, update payout to AWAITING_APPROVAL, and emit event', async () => {
@@ -223,7 +223,7 @@ describe('MultiSigPayoutService', () => {
     });
   });
 
-  // ── processApprovedPayout ─────────────────────────────────────────────────
+  // â”€â”€ processApprovedPayout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('processApprovedPayout', () => {
     it('should update payout to PROCESSING and emit event', async () => {
@@ -266,7 +266,7 @@ describe('MultiSigPayoutService', () => {
     });
   });
 
-  // ── handleRejectedPayout ──────────────────────────────────────────────────
+  // â”€â”€ handleRejectedPayout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('handleRejectedPayout', () => {
     it('should set payout to FAILED with failureReason and emit event', async () => {
@@ -300,7 +300,7 @@ describe('MultiSigPayoutService', () => {
     });
   });
 
-  // ── getPayoutApprovalDashboard ────────────────────────────────────────────
+  // â”€â”€ getPayoutApprovalDashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('getPayoutApprovalDashboard', () => {
     it('should return dashboard with correct pending and approved counts', async () => {

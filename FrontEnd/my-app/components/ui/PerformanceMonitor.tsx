@@ -5,6 +5,7 @@ import {
   measureFCP,
   measureTTFB,
   reportWebVitals,
+  trackPerformance,
 } from '@/lib/utils/performance';
 
 const PerformanceMonitor: React.FC = () => {
@@ -15,7 +16,13 @@ const PerformanceMonitor: React.FC = () => {
 
     // Advanced web vitals
     reportWebVitals((metric) => {
-      console.log(`[Web Vital] ${metric.name}:`, metric.value);
+      trackPerformance(metric.name, metric.value, {
+        id: metric.id,
+        delta: metric.delta,
+        rating: metric.rating,
+        href: metric.href,
+        entries: metric.entries,
+      });
     });
   }, []);
 

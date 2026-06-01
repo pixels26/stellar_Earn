@@ -1,0 +1,110 @@
+# CODEOWNERS — FE-069
+#
+# Defines required reviewers for pull requests that touch critical paths in
+# this repository.  GitHub evaluates rules top-to-bottom; the LAST matching
+# pattern wins, so more-specific rules are placed below more-general ones.
+#
+# Replace the placeholder handles below with your project's actual GitHub
+# usernames or team slugs (e.g. @your-org/frontend-leads) before merging.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ─── 1. Global fallback ──────────────────────────────────────────────────────
+# Every file not matched by a more-specific rule falls back to these reviewers.
+*  @RUKAYAT-CODER @od-hunter
+
+# ─── 2. GitHub configuration ─────────────────────────────────────────────────
+# Workflows, issue templates, PR templates, and this file itself.
+.github/  @RUKAYAT-CODER @Habibah371
+
+# ─── 3. FrontEnd/my-app — whole directory ────────────────────────────────────
+# Any change inside the Next.js application requires at least one frontend
+# reviewer.
+FrontEnd/my-app/  @RUKAYAT-CODER @od-hunter
+
+# ─── 4. App router (Next.js pages & layouts) ─────────────────────────────────
+# Changes to routing structure, root layout, and error boundaries affect the
+# entire user experience.
+FrontEnd/my-app/app/  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/app/layout.tsx  @RUKAYAT-CODER
+FrontEnd/my-app/app/page.tsx  @RUKAYAT-CODER
+FrontEnd/my-app/app/error.tsx  @RUKAYAT-CODER
+FrontEnd/my-app/app/not-found.tsx  @RUKAYAT-CODER
+
+# ─── 5. Admin panel ──────────────────────────────────────────────────────────
+# Admin routes are privileged surfaces; changes need explicit sign-off from
+# at least two reviewers.
+FrontEnd/my-app/app/admin/  @RUKAYAT-CODER @Habibah371
+
+# ─── 6. Authentication & wallet (security-critical) ──────────────────────────
+# Bugs here can expose user funds or accounts.
+FrontEnd/my-app/context/AuthContext.tsx  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/context/WalletContext.tsx  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/context/walletTypes.ts  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/context/  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/components/auth/  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/components/wallet/  @RUKAYAT-CODER @Habibah371
+
+# ─── 7. Submissions flow ─────────────────────────────────────────────────────
+# Submission components and pages handle user-generated proof data; changes
+# affect on-chain payout eligibility.
+FrontEnd/my-app/app/submissions/  @RUKAYAT-CODER @fahatadam
+FrontEnd/my-app/components/submission/  @RUKAYAT-CODER @fahatadam
+
+# ─── 8. Rewards & quests ─────────────────────────────────────────────────────
+FrontEnd/my-app/app/quests/  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/app/rewards/  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/components/quest/  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/components/rewards/  @RUKAYAT-CODER @od-hunter
+
+# ─── 9. Core library ─────────────────────────────────────────────────────────
+# Shared utilities, hooks, and types consumed across the whole application.
+FrontEnd/my-app/lib/  @RUKAYAT-CODER @od-hunter
+
+# API client layer — changes to request/response contracts need review.
+FrontEnd/my-app/lib/api/  @RUKAYAT-CODER @Habibah371
+
+# Global state store — changes affect all components reading from the store.
+FrontEnd/my-app/lib/store/  @RUKAYAT-CODER @fahatadam
+
+# Stellar-specific helpers — cryptographic or network logic.
+FrontEnd/my-app/lib/stellar/  @RUKAYAT-CODER @Habibah371
+
+# Validation schemas — must stay in sync with backend DTOs.
+FrontEnd/my-app/lib/validation/  @RUKAYAT-CODER @Habibah371
+
+# ─── 10. Shared UI components ────────────────────────────────────────────────
+# Design-system primitives used across every page; visual regressions have
+# high blast radius.
+FrontEnd/my-app/components/ui/  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/components/layout/  @RUKAYAT-CODER @od-hunter
+
+# ─── 11. Styles ──────────────────────────────────────────────────────────────
+# Global stylesheet and Tailwind config affect every rendered page.
+FrontEnd/my-app/styles/  @RUKAYAT-CODER
+FrontEnd/my-app/tailwind.config.js  @RUKAYAT-CODER
+FrontEnd/my-app/app/globals.css  @RUKAYAT-CODER
+
+# ─── 12. Project configuration ───────────────────────────────────────────────
+# Build, TypeScript, and dependency config — accidental changes can silently
+# break the production build or introduce supply-chain risk.
+FrontEnd/my-app/next.config.ts  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/next.config.csp.ts  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/tsconfig.json  @RUKAYAT-CODER
+FrontEnd/my-app/package.json  @RUKAYAT-CODER @Habibah371
+FrontEnd/my-app/eslint.config.mjs  @RUKAYAT-CODER
+FrontEnd/my-app/postcss.config.mjs  @RUKAYAT-CODER
+
+# ─── 13. Test infrastructure ─────────────────────────────────────────────────
+# Test configuration determines what runs in CI; accidental changes can
+# silently disable coverage gates.
+FrontEnd/my-app/vitest.config.ts  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/playwright.config.ts  @RUKAYAT-CODER @od-hunter
+FrontEnd/my-app/tests/  @RUKAYAT-CODER @od-hunter @fahatadam
+FrontEnd/my-app/lib/__tests__/  @RUKAYAT-CODER @od-hunter
+
+# ─── 14. Analytics & instrumentation ─────────────────────────────────────────
+# Telemetry hooks and Sentry wiring; touches privacy-sensitive data handling.
+FrontEnd/my-app/instrumentation.ts  @RUKAYAT-CODER
+FrontEnd/my-app/lib/analytics/  @RUKAYAT-CODER @fahatadam
+FrontEnd/my-app/components/analytics/  @RUKAYAT-CODER @fahatadam

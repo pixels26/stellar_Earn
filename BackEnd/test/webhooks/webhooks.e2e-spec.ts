@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { WebhooksModule } from '../../src/modules/webhooks/webhooks.module';
-import { generateWebhookSignature } from '../../src/modules/webhooks/utils/signature';
+import { WebhooksModule } from '#src/modules/webhooks/webhooks.module';
+import { generateWebhookSignature } from '#src/modules/webhooks/utils/signature';
 
 describe('WebhooksController (e2e)', () => {
   let app: INestApplication;

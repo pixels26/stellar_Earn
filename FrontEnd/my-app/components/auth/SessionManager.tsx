@@ -1,20 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../lib/api/client';
+import { useStore } from '../../lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, RefreshCw, LogOut } from 'lucide-react';
+import { AlertTriangle, RefreshCw, LogOut, Wallet } from 'lucide-react';
+
+const SESSION_EXPIRED_EVENT = 'session-expired';
 
 /**
  * SessionManager handles:
  * 1. Auto-refreshing tokens before they expire (via /auth/profile calls)
  * 2. Monitoring authentication status
- * 3. Showing session timeout warnings
+ * 3. Showing session expired/timeout modals
  */
 export function SessionManager() {
-  const { isAuthenticated, refreshProfile, logout, user } = useAuth();
+  const { isAuthenticated, refreshProfile, logout } = useAuth();
+  const setWalletModalOpen = useStore((s) => s.setWalletModalOpen);
   const [showWarning, setShowWarning] = useState(false);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const refreshInterval = useRef<NodeJS.Timeout | null>(null);
@@ -25,11 +30,30 @@ export function SessionManager() {
   const REFRESH_BEFORE_EXPIRY = 60 * 1000; // 1 minute before access token expiry
   const DEFAULT_ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000; // 15 minutes
 
+  const handleSessionExpired = useCallback(() => {
+    setIsSessionExpired(true);
+    setShowWarning(true);
+    if (refreshInterval.current) {
+      clearInterval(refreshInterval.current);
+      refreshInterval.current = null;
+    }
+    if (warningTimeout.current) {
+      clearTimeout(warningTimeout.current);
+      warningTimeout.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => {
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, [handleSessionExpired]);
+
   useEffect(() => {
     const setupTimers = () => {
       if (!isAuthenticated) return;
 
-      // Clear existing timers
       if (refreshInterval.current) clearInterval(refreshInterval.current);
       if (warningTimeout.current) clearTimeout(warningTimeout.current);
 
@@ -56,6 +80,19 @@ export function SessionManager() {
     };
   }, [isAuthenticated, refreshProfile]);
 
+  const handleReconnect = useCallback(async () => {
+    await logout();
+    setShowWarning(false);
+    setIsSessionExpired(false);
+    setWalletModalOpen(true);
+  }, [logout, setWalletModalOpen]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setShowWarning(false);
+    setIsSessionExpired(false);
+  }, [logout]);
+
   return (
     <>
       <AnimatePresence>
@@ -73,7 +110,44 @@ export function SessionManager() {
           </motion.div>
         )}
 
-        {showWarning && (
+        {showWarning && isSessionExpired && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          >
+            <div className="w-[90vw] max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-[#2A3338] dark:bg-[#161E22]">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 className="mb-2 text-lg font-bold text-zinc-900 dark:text-white">
+                Session Expired
+              </h3>
+              <p className="mb-6 text-sm text-zinc-500 dark:text-[#92A5A8]">
+                Your session has expired. Please sign in again to continue.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleLogout}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-[#2A3338] dark:hover:bg-white/5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Dismiss
+                </button>
+                <button
+                  onClick={handleReconnect}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#33C5E0] py-2 text-sm font-bold text-black hover:bg-[#33C5E0]/90"
+                >
+                  <Wallet className="h-4 w-4" />
+                  Connect Wallet
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {showWarning && !isSessionExpired && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -93,7 +167,7 @@ export function SessionManager() {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-[#2A3338] dark:hover:bg-white/5"
                 >
                   <LogOut className="h-4 w-4" />

@@ -36,7 +36,7 @@ export class SecurityExceptionFilter implements ExceptionFilter {
       
       if (typeof responseObj === 'string') {
         message = responseObj;
-      } else if (typeof responseObj === 'object' && responseObj !== null) {
+      } else if (responseObj && typeof responseObj === 'object') {
         message = (responseObj as any).message || message;
         errorDetails = (responseObj as any).error || null;
       }

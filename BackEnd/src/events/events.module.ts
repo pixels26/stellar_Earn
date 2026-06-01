@@ -4,12 +4,15 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventsService } from './events.service';
 import { AuditLogService } from './services/audit-log.service';
 import { RetryService } from './services/retry.service';
+import { PoisonMessageService } from './services/poison-message.service';
 import { EventStoreService } from './event-store/event-store.service';
 import { EventStore } from './entities/event-store.entity';
+import { PoisonMessage } from './entities/poison-message.entity';
 import { QuestEventsHandler } from './handlers/quest-events.handler';
 import { SubmissionEventsHandler } from './handlers/submission-events.handler';
 import { UserEventsHandler } from './handlers/user-events.handler';
 import { DeadLetterHandler } from './handlers/dead-letter.handler';
+import { PoisonMessageHandler } from './handlers/poison-message.handler';
 import { EventAuditListener } from './listeners/event-audit.listener';
 import { EventPersistenceListener } from './listeners/event-persistence.listener';
 import { DeadLetterQueueListener } from './listeners/dead-letter-queue.listener';
@@ -30,18 +33,20 @@ import { PayoutListener } from './listeners/payout.listener';
       verboseMemoryLeak: true,
       ignoreErrors: false,
     }),
-    TypeOrmModule.forFeature([EventStore]),
+    TypeOrmModule.forFeature([EventStore, PoisonMessage]),
   ],
   providers: [
     EventsService,
     EventStoreService,
     AuditLogService,
     RetryService,
+    PoisonMessageService,
     // Event Handlers
     QuestEventsHandler,
     SubmissionEventsHandler,
     UserEventsHandler,
     DeadLetterHandler,
+    PoisonMessageHandler,
     // Event Listeners
     EventAuditListener,
     EventPersistenceListener,
@@ -51,6 +56,6 @@ import { PayoutListener } from './listeners/payout.listener';
     SubmissionListener,
     PayoutListener,
   ],
-  exports: [EventsService, EventStoreService],
+  exports: [EventsService, EventStoreService, PoisonMessageService],
 })
 export class EventsModule {}

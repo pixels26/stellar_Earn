@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { CustomValidationPipe } from '../../src/common/pipes/validation.pipe';
-import { SanitizationPipe } from '../../src/common/pipes/sanitization.pipe';
-import { ValidationExceptionFilter } from '../../src/common/filters/validation-exception.filter';
-import { IsStellarAddress } from '../../src/common/decorators/is-stellar-address.decorator';
-import { IsProofHash } from '../../src/common/decorators/is-proof-hash.decorator';
+import { CustomValidationPipe } from '#src/common/pipes/validation.pipe';
+import { SanitizationPipe } from '#src/common/pipes/sanitization.pipe';
+import { ValidationExceptionFilter } from '#src/common/filters/validation-exception.filter';
+import { IsStellarAddress } from '#src/common/decorators/is-stellar-address.decorator';
+import { IsProofHash } from '#src/common/decorators/is-proof-hash.decorator';
 import {
   IsString,
   IsNotEmpty,

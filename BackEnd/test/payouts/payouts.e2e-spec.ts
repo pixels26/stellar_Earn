@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { Keypair } from 'stellar-sdk';
 import { DataSource } from 'typeorm';
 import {
   Payout,
   PayoutStatus,
   PayoutType,
-} from '../../src/modules/payouts/entities/payout.entity';
+} from '#src/modules/payouts/entities/payout.entity';
 
 describe('Payouts (e2e)', () => {
   let app: INestApplication<App>;
@@ -329,6 +329,131 @@ describe('Payouts (e2e)', () => {
         }
       }
       expect(rateLimited).toBe(true);
+    });
+  });
+
+  describe('Fraud Risk Assessment (Admin)', () => {
+    let adminAccessToken: string;
+
+    beforeAll(async () => {
+      // Create admin user and get admin token
+      // Note: This assumes there's a way to create admin users in your auth system
+      // You may need to adjust this based on your actual auth implementation
+      const adminKeypair = Keypair.random();
+      const adminAddress = adminKeypair.publicKey();
+
+      const challengeResponse = await request(app.getHttpServer())
+        .post('/auth/challenge')
+        .send({ stellarAddress: adminAddress });
+
+      const challenge = challengeResponse.body.challenge;
+      const signature = adminKeypair
+        .sign(Buffer.from(challenge, 'utf8'))
+        .toString('base64');
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ stellarAddress: adminAddress, signature, challenge });
+
+      adminAccessToken = loginResponse.body.accessToken;
+    });
+
+    describe('GET /payouts/fraud-risk/:id', () => {
+      it('should analyze payout for fraud risk (admin only)', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/payouts/fraud-risk/${testPayoutId}`)
+          .set('Authorization', `Bearer ${adminAccessToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('payoutId', testPayoutId);
+        expect(response.body).toHaveProperty('riskLevel');
+        expect(response.body).toHaveProperty('riskFactors');
+        expect(response.body).toHaveProperty('flagged');
+        expect(response.body).toHaveProperty('timestamp');
+      });
+
+      it('should return 401 for unauthorized requests', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/payouts/fraud-risk/${testPayoutId}`);
+
+        expect(response.status).toBe(401);
+      });
+
+      it('should return 403 for non-admin users', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/payouts/fraud-risk/${testPayoutId}`)
+          .set('Authorization', `Bearer ${accessToken}`);
+
+        expect(response.status).toBe(403);
+      });
+
+      it('should return 404 for non-existent payout', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/550e8400-e29b-41d4-a716-446655440999')
+          .set('Authorization', `Bearer ${adminAccessToken}`);
+
+        expect(response.status).toBe(404);
+      });
+    });
+
+    describe('GET /payouts/fraud-risk/batch', () => {
+      it('should batch analyze recent payouts (admin only)', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/batch')
+          .query({ hours: 24 })
+          .set('Authorization', `Bearer ${adminAccessToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('totalPayoutsChecked');
+        expect(response.body).toHaveProperty('flaggedPayouts');
+        expect(response.body).toHaveProperty('assessments');
+        expect(Array.isArray(response.body.assessments)).toBe(true);
+      });
+
+      it('should return 401 for unauthorized requests', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/batch');
+
+        expect(response.status).toBe(401);
+      });
+
+      it('should return 403 for non-admin users', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/batch')
+          .set('Authorization', `Bearer ${accessToken}`);
+
+        expect(response.status).toBe(403);
+      });
+    });
+
+    describe('GET /payouts/fraud-risk/statistics', () => {
+      it('should return fraud risk statistics (admin only)', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/statistics')
+          .set('Authorization', `Bearer ${adminAccessToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('totalPayouts');
+        expect(response.body).toHaveProperty('highRiskPayouts');
+        expect(response.body).toHaveProperty('criticalRiskPayouts');
+        expect(response.body).toHaveProperty('averagePayoutAmount');
+        expect(response.body).toHaveProperty('uniqueAddresses');
+      });
+
+      it('should return 401 for unauthorized requests', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/statistics');
+
+        expect(response.status).toBe(401);
+      });
+
+      it('should return 403 for non-admin users', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/payouts/fraud-risk/statistics')
+          .set('Authorization', `Bearer ${accessToken}`);
+
+        expect(response.status).toBe(403);
+      });
     });
   });
 });

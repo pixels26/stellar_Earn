@@ -19,6 +19,7 @@ Thank you for contributing to **stellar_Earn**! This guide covers the standards 
 7. [Smart Contract (Rust / Soroban)](#7-smart-contract-rust--soroban)
 8. [Reviewer Checklist](#8-reviewer-checklist)
 9. [Labels](#9-labels)
+10. [Script Inventory](#10-script-inventory)
 
 ---
 
@@ -115,6 +116,15 @@ Closes #42
 ### PR Size Guidelines
 
 Keep PRs focused. If a PR touches more than ~400 lines (excluding migrations and generated files), consider splitting it. Large PRs take much longer to review and are more likely to introduce bugs.
+
+## 10. Script Inventory
+
+Repository-maintained scripts are tracked in [docs/script-inventory.md](/Users/macbook/stellar/stellar_Earn/docs/script-inventory.md:1). When you add or change a script, update that inventory with:
+
+- its purpose
+- the owning team or function
+- its lifecycle state
+- any notable maintenance or verification notes
 
 ---
 
@@ -383,6 +393,11 @@ describe('QuestsService', () => {
 - Never expose raw contract errors to API consumers — translate them in the NestJS service layer
 - Soroban RPC calls must be async and non-blocking to the main request thread (use BullMQ jobs)
 
+- Changes to `contracts/earn-quest/src/**` must update [contracts/earn-quest/CHANGELOG.md](contracts/earn-quest/CHANGELOG.md)
+- Contract-breaking changes must use Conventional Commit breaking metadata (`type(scope)!:`) and a `BREAKING CHANGE:` explanation
+- Contract-breaking changelog entries must live under `## [Unreleased]` -> `### Breaking Changes` and include impact, affected files, and migration steps
+- See [contracts/earn-quest/docs/CHANGELOG_DISCIPLINE.md](contracts/earn-quest/docs/CHANGELOG_DISCIPLINE.md) for the full policy and CI-enforced expectations
+
 ---
 
 ## 8. Reviewer Checklist
@@ -466,3 +481,29 @@ Use this checklist when reviewing any PR targeting the NestJS backend:
 ---
 
 *For questions, open a GitHub Discussion or ping a maintainer in the PR comments.*
+
+---
+
+## 10. Frontend Changelog Policy (FE-068)
+
+The frontend (`FrontEnd/my-app/`) maintains a Keep-a-Changelog-style
+[`CHANGELOG.md`](FrontEnd/my-app/CHANGELOG.md) so that every breaking
+TypeScript type, interface, enum, Zod schema, or API model change is
+announced and migratable.
+
+**Read the full policy:**
+[`FrontEnd/my-app/docs/TYPE_CHANGES_POLICY.md`](FrontEnd/my-app/docs/TYPE_CHANGES_POLICY.md)
+
+In short:
+
+1. If your PR modifies any file under
+   `FrontEnd/my-app/lib/types/**`, `lib/api/**`, `lib/schemas/**`,
+   `lib/validation/**`, or `context/walletTypes.ts`, you must either
+   update [`CHANGELOG.md`](FrontEnd/my-app/CHANGELOG.md) or add a file in
+   [`FrontEnd/my-app/.changeset/`](FrontEnd/my-app/.changeset/README.md).
+2. For breaking changes the entry **must** include a before/after
+   `Migration:` code block.
+3. CI runs `npm run changelog:check` via the
+   [`frontend-changelog`](.github/workflows/frontend-changelog.yml) workflow.
+4. To bypass for a verified non-breaking change, add the
+   `changelog-skip` label or `[changelog-skip]` token to the PR title.

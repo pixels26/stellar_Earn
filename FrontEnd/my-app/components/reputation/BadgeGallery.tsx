@@ -32,10 +32,12 @@ function BadgeCard({
       className="relative group"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
-      onClick={onClick}
     >
-      <div
-        className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`View badge ${badge.name}`}
+        className={`relative rounded-lg border-2 p-4 transition-all text-left ${
           isEarned
             ? `${rarityColors[badge.rarity]} bg-white dark:bg-zinc-900 hover:scale-105 hover:shadow-md`
             : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 opacity-50 grayscale'
@@ -99,7 +101,7 @@ function BadgeCard({
             </div>
           </div>
         )}
-      </div>
+      </button>
     </div>
   );
 }
@@ -145,12 +147,13 @@ export function BadgeGallery({
       {badges.map((badge) => {
         const isEarned = earnedBadgeIds.includes(badge.id);
         return (
-          <BadgeCard
-            key={badge.id}
-            badge={badge}
-            isEarned={isEarned}
-            onClick={() => onBadgeClick?.(badge)}
-          />
+          <div key={badge.id} className="relative group">
+            <BadgeCard
+              badge={badge}
+              isEarned={isEarned}
+              onClick={() => onBadgeClick?.(badge)}
+            />
+          </div>
         );
       })}
     </div>

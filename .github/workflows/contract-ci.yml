@@ -1,0 +1,89 @@
+name: Contract CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "contracts/**"
+      - "Contract_archived/**"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "contracts/**"
+      - "Contract_archived/**"
+
+jobs:
+  build-and-test:
+    name: Build and Test Contracts
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: contracts/earn-quest
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('contracts/earn-quest/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache target directory
+        uses: actions/cache@v4
+        with:
+          path: contracts/earn-quest/target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('contracts/earn-quest/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-
+
+      - name: Build workspace
+        run: cargo build --release
+
+      - name: Run tests
+        run: cargo test
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy lint
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: License check
+        run: |
+          cargo install cargo-deny || true
+          make license-check
+
+      - name: Build WASM
+        run: cargo build --release --target wasm32-unknown-unknown
+
+  contract-ci-gate:
+    name: Contract CI Gate
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always()
+    steps:
+      - name: Validate results
+        run: |
+          build_status="${{ needs.build-and-test.result }}"
+          echo "Build status: $build_status"
+          if [ "$build_status" != "success" ]; then
+            echo "Contract CI failed"
+            exit 1
+          fi
+          echo "All contract CI checks passed"

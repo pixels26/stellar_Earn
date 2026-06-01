@@ -32,6 +32,10 @@ export enum JobType {
   // Quest Monitoring
   QUEST_DEADLINE_CHECK = 'quest:deadline-check',
   QUEST_COMPLETION_VERIFY = 'quest:completion-verify',
+  QUEST_STATE_RECONCILE = 'quest:state-reconcile',
+
+  // Dependency Management
+  DEPENDENCY_FRESHNESS_CHECK = 'dependency:freshness-check',
 }
 
 export enum JobPriority {
@@ -175,6 +179,12 @@ export interface QuestCompletionVerifyPayload extends JobPayload {
   submissionId: string;
 }
 
+export interface DependencyFreshnessCheckPayload extends JobPayload {
+  repositoryOwner: string;
+  repositoryName: string;
+  branch?: string;
+}
+
 export type AnyJobPayload =
   | PayoutProcessPayload
   | PayoutSettlePayload
@@ -190,4 +200,5 @@ export type AnyJobPayload =
   | AnalyticsAggregatePayload
   | MetricsCollectPayload
   | QuestDeadlineCheckPayload
-  | QuestCompletionVerifyPayload;
+  | QuestCompletionVerifyPayload
+  | DependencyFreshnessCheckPayload;

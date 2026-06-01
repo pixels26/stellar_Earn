@@ -1,32 +1,32 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 
 // Import all major modules
-import { AuthModule } from '../../../src/modules/auth/auth.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { QuestsModule } from '../../../src/modules/quests/quests.module';
-import { SubmissionsModule } from '../../../src/modules/submissions/submissions.module';
-import { PayoutsModule } from '../../../src/modules/payouts/payouts.module';
-import { StellarModule } from '../../../src/modules/stellar/stellar.module';
-import { NotificationsModule } from '../../../src/modules/notifications/notifications.module';
+import { AuthModule } from '#src/modules/auth/auth.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { QuestsModule } from '#src/modules/quests/quests.module';
+import { SubmissionsModule } from '#src/modules/submissions/submissions.module';
+import { PayoutsModule } from '#src/modules/payouts/payouts.module';
+import { StellarModule } from '#src/modules/stellar/stellar.module';
+import { NotificationsModule } from '#src/modules/notifications/notifications.module';
 
 // Import services
-import { AuthService } from '../../../src/modules/auth/auth.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { QuestsService } from '../../../src/modules/quests/quests.service';
-import { SubmissionsService } from '../../../src/modules/submissions/submissions.service';
-import { PayoutsService } from '../../../src/modules/payouts/payouts.service';
-import { StellarService } from '../../../src/modules/stellar/stellar.service';
+import { AuthService } from '#src/modules/auth/auth.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { QuestsService } from '#src/modules/quests/quests.service';
+import { SubmissionsService } from '#src/modules/submissions/submissions.service';
+import { PayoutsService } from '#src/modules/payouts/payouts.service';
+import { StellarService } from '#src/modules/stellar/stellar.service';
 
 // Import entities
-import { User } from '../../../src/modules/users/entities/user.entity';
-import { Quest } from '../../../src/modules/quests/entities/quest.entity';
-import { Submission } from '../../../src/modules/submissions/entities/submission.entity';
-import { Payout } from '../../../src/modules/payouts/entities/payout.entity';
-import { RefreshToken } from '../../../src/modules/auth/entities/refresh-token.entity';
+import { User } from '#src/modules/users/entities/user.entity';
+import { Quest } from '#src/modules/quests/entities/quest.entity';
+import { Submission } from '#src/modules/submissions/entities/submission.entity';
+import { Payout } from '#src/modules/payouts/entities/payout.entity';
+import { RefreshToken } from '#src/modules/auth/entities/refresh-token.entity';
 
 describe('Full Application Integration', () => {
   let module: TestingModule;

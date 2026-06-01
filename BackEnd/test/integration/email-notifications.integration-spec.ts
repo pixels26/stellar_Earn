@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { EmailModule } from '../../../src/modules/email/email.module';
-import { NotificationsModule } from '../../../src/modules/notifications/notifications.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { EmailService } from '../../../src/modules/email/email.service';
-import { NotificationsService } from '../../../src/modules/notifications/notifications.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { User } from '../../../src/modules/users/entities/user.entity';
-import { Notification } from '../../../src/modules/notifications/entities/notification.entity';
+import { EmailModule } from '#src/modules/email/email.module';
+import { NotificationsModule } from '#src/modules/notifications/notifications.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { EmailService } from '#src/modules/email/email.service';
+import { NotificationsService } from '#src/modules/notifications/notifications.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { User } from '#src/modules/users/entities/user.entity';
+import { Notification } from '#src/modules/notifications/entities/notification.entity';
 
 describe('Email-Notifications Integration', () => {
   let module: TestingModule;

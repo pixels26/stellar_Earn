@@ -1,18 +1,18 @@
-import { Test } from '@nestjs/testing';
+﻿import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ModerationService } from '../../src/modules/moderation/moderation.service';
+import { ModerationService } from '#src/modules/moderation/moderation.service';
 import {
   ModerationItem,
   ModerationAction,
-} from '../../src/modules/moderation/entities/moderation-item.entity';
-import { ModerationAppeal } from '../../src/modules/moderation/entities/moderation-appeal.entity';
-import { KeywordFilterService } from '../../src/modules/moderation/filters/keyword-filter.service';
-import { ContentClassifierService } from '../../src/modules/moderation/filters/content-classifier.service';
-import { ImageModerationService } from '../../src/modules/moderation/filters/image-moderation.service';
-import { ExternalModerationApiService } from '../../src/modules/moderation/filters/external-moderation-api.service';
-import moderationConfig from '../../src/config/moderation.config';
+} from '#src/modules/moderation/entities/moderation-item.entity';
+import { ModerationAppeal } from '#src/modules/moderation/entities/moderation-appeal.entity';
+import { KeywordFilterService } from '#src/modules/moderation/filters/keyword-filter.service';
+import { ContentClassifierService } from '#src/modules/moderation/filters/content-classifier.service';
+import { ImageModerationService } from '#src/modules/moderation/filters/image-moderation.service';
+import { ExternalModerationApiService } from '#src/modules/moderation/filters/external-moderation-api.service';
+import moderationConfig from '#src/config/moderation.config';
 
 describe('Moderation filters', () => {
   let keywordFilter: KeywordFilterService;

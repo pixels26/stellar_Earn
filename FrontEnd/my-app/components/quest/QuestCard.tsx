@@ -1,15 +1,20 @@
 'use client';
 
-import { memo } from 'react';
+import React, { memo } from 'react';
 import type { Quest } from '@/lib/types/quest';
 import { QuestDifficulty } from '@/lib/types/quest';
+
 import { useFormatter } from '@/lib/hooks/useFormatter';
+
+import { formatDeadlineLabel } from '@/lib/utils/date';
+
 
 interface QuestCardProps {
   quest: Quest;
   onClick?: (quest: Quest) => void;
   progress?: number;
 }
+
 
 // ─── Removed: formatTimeRemaining() ───────────────────────────────────────────
 // Previously a hand-rolled English-only function that:
@@ -32,6 +37,7 @@ function isDeadlineUrgent(deadline?: string | null): boolean {
   const diffDays = (deadlineMs - Date.now()) / (1000 * 60 * 60 * 24);
   return diffDays >= 0 && diffDays <= 3;
 }
+
 
 const difficultyStyles: Record<QuestDifficulty, string> = {
   [QuestDifficulty.EASY]: 'quest-card__diff--easy',
@@ -66,6 +72,7 @@ function avatarColor(name: string): string {
 
 export const QuestCard = memo(
   ({ quest, onClick, progress }: QuestCardProps) => {
+
     // useFormatter reads navigator.language once and returns pre-bound,
     // memoised formatting functions — no locale prop drilling needed.
     const { deadline, reward, compactReward } = useFormatter();
@@ -77,6 +84,13 @@ export const QuestCard = memo(
 
     // Urgency check is now locale-independent (raw ms comparison)
     const isUrgent = isDeadlineUrgent(quest.deadline);
+
+    const timeLabel = formatDeadlineLabel(quest.deadline ?? undefined);
+    const isUrgent =
+      timeLabel && !['Expired', 'Today'].includes(timeLabel)
+        ? parseInt(timeLabel) <= 3
+        : false;
+
 
     const handleClick = () => onClick?.(quest);
 
@@ -109,17 +123,10 @@ export const QuestCard = memo(
     });
 
     return (
-      <article
-        role="button"
-        tabIndex={0}
-        aria-label={cardLabel}
+      <button
+        type="button"
         onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
+        aria-label={cardLabel}
         className="quest-card"
       >
         <div className="quest-card__top" aria-hidden="true">
@@ -144,9 +151,9 @@ export const QuestCard = memo(
             className="quest-card__skills"
             aria-label={`Required skills: ${quest.skills.join(', ')}`}
           >
-            {quest.skills.map((skill: string) => (
+            {quest.skills.map((skill: string, index: number) => (
               <span
-                key={skill}
+                key={`${quest.id}-skill-${skill}-${index}`}
                 className="quest-card__skill-tag"
                 aria-hidden="true"
               >
@@ -260,15 +267,29 @@ export const QuestCard = memo(
         <div className="quest-card__footer" aria-hidden="true">
           {quest.creator && (
             <div className="quest-card__creator">
-              <span
-                className="quest-card__avatar"
-                style={{ backgroundColor: avatarColor(quest.creator.name) }}
-                aria-hidden="true"
-              >
-                {quest.creator.name.slice(0, 2).toUpperCase()}
-              </span>
+              {quest.creator.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={quest.creator.avatarUrl}
+                  alt=""
+                  className="quest-card__avatar quest-card__avatar--img"
+                  aria-hidden="true"
+                />
+              ) : (
+                <span
+                  className="quest-card__avatar"
+                  style={{
+                    backgroundColor: avatarColor(
+                      quest.creator.name || 'Unknown'
+                    ),
+                  }}
+                  aria-hidden="true"
+                >
+                  {(quest.creator.name || 'UN').slice(0, 2).toUpperCase()}
+                </span>
+              )}
               <span className="quest-card__creator-name">
-                {quest.creator.name}
+                {quest.creator.name || 'Unknown Creator'}
               </span>
             </div>
           )}
@@ -303,7 +324,7 @@ export const QuestCard = memo(
         >
           Quick Apply →
         </button>
-      </article>
+      </button>
     );
   }
 );

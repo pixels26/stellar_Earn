@@ -1,4 +1,4 @@
-const SW_VERSION = 'v1.0.0'; // Update this version string to invalidate caches
+const SW_VERSION = 'v1.0.1';
 const CACHE_PREFIX = 'stellar-earn';
 
 // Cache names
@@ -54,8 +54,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 1: Network First (for HTML pages and API requests)
-  if (request.headers.get('accept').includes('text/html') || url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
@@ -63,12 +62,41 @@ self.addEventListener('fetch', (event) => {
           caches.open(DYNAMIC_CACHE).then((cache) => cache.put(request, responseClone));
           return networkResponse;
         })
-        .catch(() => caches.match(request)) // Fallback to cache if offline
+        .catch(async () => {
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          return new Response(
+            JSON.stringify({ 
+              message: 'Unable to connect to the server. The API may be unreachable.', 
+              code: 'ERR_NETWORK',
+              error: 'Service Unavailable' 
+            }),
+            { 
+              status: 503, 
+              headers: { 'Content-Type': 'application/json' } 
+            }
+          );
+        })
     );
     return;
   }
 
-  // Strategy 2: Cache First with Network Fallback (for static assets: JS, CSS, Images)
+  if (request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => cache.put(request, responseClone));
+          return networkResponse;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       return cachedResponse || fetch(request).then((networkResponse) => {

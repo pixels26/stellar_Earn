@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { SecurityExceptionFilter } from '../../src/common/filters/security-exception.filter';
-import { SanitizationPipe } from '../../src/common/pipes/sanitization.pipe';
+import { AppModule } from '#src/app.module';
+import { SecurityExceptionFilter } from '#src/common/filters/security-exception.filter';
+import { SanitizationPipe } from '#src/common/pipes/sanitization.pipe';
 
 describe('Security Hardening (e2e)', () => {
   let app: INestApplication;

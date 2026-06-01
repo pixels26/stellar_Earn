@@ -28,7 +28,7 @@ export class AppThrottlerGuard extends ThrottlerGuard {
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const { req } = this.getRequestResponse(context);
-    const userRole = await this.extractUserRole(req);
+    const userRole = this.extractUserRole(req);
 
     // Skip rate limiting for admins
     if (userRole === UserRole.ADMIN) {
@@ -41,16 +41,16 @@ export class AppThrottlerGuard extends ThrottlerGuard {
   /**
    * Extract user identity and role information for per-user rate limiting
    */
-  private async extractUserRole(
+  private extractUserRole(
     req: Record<string, any>,
-  ): Promise<string | undefined> {
+  ): string | undefined {
     // Check if user is in request (from auth guard)
-    if (req?.user?.role) {
+    if (req.user?.role) {
       return req.user.role;
     }
 
     // Try to extract role from JWT token
-    const authHeader = req?.headers?.authorization;
+    const authHeader = req.headers?.authorization;
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {

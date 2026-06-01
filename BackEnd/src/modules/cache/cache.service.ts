@@ -224,7 +224,21 @@ export class CacheService {
   }
 
   resetStats(): void {
-    this.analyticsService.resetAnalytics();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  /**
+   * Return current cache statistics.
+   */
+  getStats(key?: string): CacheStats {
+    const total = this.hits + this.misses;
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRate: total > 0 ? Math.round((this.hits / total) * 10000) / 100 : 0,
+      keys: total,
+    };
   }
 
   generateKey(prefix: string, params: Record<string, any>): string {
@@ -252,5 +266,19 @@ export class CacheService {
 
   async reset(): Promise<void> {
     return this.clear();
+  }
+
+  /**
+   * Clear all cache (alias for flush).
+   */
+  async clear(): Promise<void> {
+    return this.flush();
+  }
+
+  /**
+   * Delete pattern or prefix from cache (alias for invalidatePrefix).
+   */
+  async deletePattern(pattern: string): Promise<void> {
+    return this.invalidatePrefix(pattern);
   }
 }

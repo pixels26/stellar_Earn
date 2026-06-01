@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { EmailTemplateEngine } from '../../src/modules/email/templates/template.engine';
-import { EmailTemplate } from '../../src/modules/email/dto/email.dto';
+import { EmailTemplateEngine } from '#src/modules/email/templates/template.engine';
+import { EmailTemplate } from '#src/modules/email/dto/email.dto';
 
 describe('EmailTemplateEngine', () => {
   let engine: EmailTemplateEngine;

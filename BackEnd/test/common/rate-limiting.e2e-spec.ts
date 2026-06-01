@@ -1,10 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+﻿import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Keypair } from 'stellar-sdk';
 
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 
 const sleep = (ms = 2100) => new Promise((resolve) => setTimeout(resolve, ms));
 

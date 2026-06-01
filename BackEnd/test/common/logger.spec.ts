@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppLoggerService } from '../../src/common/logger/logger.service';
-import { LoggerModule } from '../../src/common/logger/logger.module';
+import { AppLoggerService } from '#src/common/logger/logger.service';
+import { LoggerModule } from '#src/common/logger/logger.module';
 import {
   sanitizeLogObject,
   sanitizeHeaders,
   sanitizeUrl,
   sanitizeBody,
-} from '../../src/common/logger/sanitize.util';
-import { LoggingInterceptor } from '../../src/common/interceptors/logging.interceptor';
-import { ErrorLoggerFilter } from '../../src/common/filter/error-logger.filter';
-import { LoggerMiddleware } from '../../src/common/middleware/logger.middleware';
-import { createLoggerConfig, getLoggerConfig } from '../../src/config/logger.config';
+} from '#src/common/logger/sanitize.util';
+import { LoggingInterceptor } from '#src/common/interceptors/logging.interceptor';
+import { ErrorLoggerFilter } from '#src/common/filter/error-logger.filter';
+import { LoggerMiddleware } from '#src/common/middleware/logger.middleware';
+import { createLoggerConfig, getLoggerConfig } from '#src/config/logger.config';
 import { Reflector } from '@nestjs/core';
 
 describe('Logger Service', () => {

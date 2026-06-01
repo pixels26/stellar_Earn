@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { QuestsService } from '../../src/modules/quests/quests.service';
-import { CacheService } from '../../src/modules/cache/cache.service';
-import { Quest } from '../../src/modules/quests/entities/quest.entity';
+import { QuestsService } from '#src/modules/quests/quests.service';
+import { CacheService } from '#src/modules/cache/cache.service';
+import { Quest } from '#src/modules/quests/entities/quest.entity';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { CACHE_KEYS, CACHE_TTL } from '../../src/config/cache.config';
-import { QuestStatus } from '../../src/modules/quests/enums/quest-status.enum';
+import { CACHE_KEYS, CACHE_TTL } from '#src/config/cache.config';
+import { QuestStatus } from '#src/modules/quests/enums/quest-status.enum';
 
 describe('QuestsService with Caching', () => {
   let service: QuestsService;

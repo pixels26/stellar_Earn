@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Auth E2E Tests - Fixed Version with Stability Improvements
  * Demonstrates best practices for stable E2E tests
  */
@@ -7,7 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { Keypair } from 'stellar-sdk';
 import {
   waitForAppReady,

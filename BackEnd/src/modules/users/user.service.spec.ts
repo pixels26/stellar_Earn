@@ -5,6 +5,7 @@ import { UsersService } from './user.service';
 import { User } from './entities/user.entity';
 import { Quest } from '../quests/entities/quest.entity';
 import { Submission, SubmissionStatus } from '../submissions/entities/submission.entity';
+import { SubmissionBuilder } from '../../../test/utils/submission.builder';
 import { Payout } from '../payouts/entities/payout.entity';
 import { Role } from '../../common/enums/role.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -294,25 +295,30 @@ describe('UsersService', () => {
       const user = createMockUser();
       const address = user.stellarAddress;
       const submissions = [
-        {
-          id: '1',
-          status: SubmissionStatus.APPROVED,
-          createdAt: new Date(),
-          approvedAt: new Date(Date.now() + 3600000),
-          quest: { category: 'development' },
-        } as any,
-        {
-          id: '2',
-          status: SubmissionStatus.PENDING,
-          createdAt: new Date(),
-          quest: { category: 'development' },
-        } as any,
-        {
-          id: '3',
-          status: SubmissionStatus.REJECTED,
-          createdAt: new Date(),
-          quest: { category: 'testing' },
-        } as any,
+        Object.assign(
+          new SubmissionBuilder()
+            .withId('1')
+            .withStatus(SubmissionStatus.APPROVED)
+            .withQuest({ category: 'development' })
+            .build(),
+          { createdAt: new Date(), approvedAt: new Date(Date.now() + 3600000) }
+        ),
+        Object.assign(
+          new SubmissionBuilder()
+            .withId('2')
+            .withStatus(SubmissionStatus.PENDING)
+            .withQuest({ category: 'development' })
+            .build(),
+          { createdAt: new Date() }
+        ),
+        Object.assign(
+          new SubmissionBuilder()
+            .withId('3')
+            .withStatus(SubmissionStatus.REJECTED)
+            .withQuest({ category: 'testing' })
+            .build(),
+          { createdAt: new Date() }
+        ),
       ];
 
       jest.spyOn(cacheManager, 'get').mockResolvedValue(null);

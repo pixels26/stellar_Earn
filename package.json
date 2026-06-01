@@ -1,0 +1,17 @@
+{
+  "name": "stellar-earn-ci-tools",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-tests.js",
+    "lint-staged": "lint-staged",
+    "prepare": "git rev-parse --git-dir > /dev/null 2>&1 && bash scripts/install-hooks.sh || true"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.8.3"
+  }
+}

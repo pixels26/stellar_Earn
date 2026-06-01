@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { UserCreatedEvent } from '../../src/events/dto/user-created.event';
-import { UserUpdatedEvent } from '../../src/events/dto/user-updated.event';
-import { UserListener } from '../../src/events/listeners/user.listener';
-import { QuestCreatedEvent } from '../../src/events/dto/quest-created.event';
-import { QuestDeletedEvent } from '../../src/events/dto/quest-deleted.event';
-import { QuestListener } from '../../src/events/listeners/quest.listener';
-import { PayoutProcessedEvent } from '../../src/events/dto/payout-processed.event';
-import { PayoutFailedEvent } from '../../src/events/dto/payout-failed.event';
-import { SubmissionRejectedEvent } from '../../src/events/dto/submission-rejected.event';
-import { EventAuditListener } from '../../src/events/listeners/event-audit.listener';
+import { UserCreatedEvent } from '#src/events/dto/user-created.event';
+import { UserUpdatedEvent } from '#src/events/dto/user-updated.event';
+import { UserListener } from '#src/events/listeners/user.listener';
+import { QuestCreatedEvent } from '#src/events/dto/quest-created.event';
+import { QuestDeletedEvent } from '#src/events/dto/quest-deleted.event';
+import { QuestListener } from '#src/events/listeners/quest.listener';
+import { PayoutProcessedEvent } from '#src/events/dto/payout-processed.event';
+import { PayoutFailedEvent } from '#src/events/dto/payout-failed.event';
+import { SubmissionRejectedEvent } from '#src/events/dto/submission-rejected.event';
+import { EventAuditListener } from '#src/events/listeners/event-audit.listener';
 
-import { PayoutListener } from '../../src/events/listeners/payout.listener';
-import { SubmissionListener } from '../../src/events/listeners/submission.listener';
+import { PayoutListener } from '#src/events/listeners/payout.listener';
+import { SubmissionListener } from '#src/events/listeners/submission.listener';
 
 describe('Events Architecture', () => {
     let eventEmitter: EventEmitter2;

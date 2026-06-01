@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { AppModule } from '#src/app.module';
 import { Keypair } from 'stellar-sdk';
-import { QuestStatus } from '../../src/modules/quests/enums/quest-status.enum';
+import { QuestStatus } from '#src/modules/quests/enums/quest-status.enum';
 
 describe('Quests (e2e)', () => {
   let app: INestApplication<App>;

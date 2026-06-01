@@ -660,6 +660,21 @@ In your CI/CD pipeline:
     fi
 ```
 
+### Flaky-Test Quarantine Policy
+
+Use the `flaky-test-quarantine` label for tests that fail intermittently and need temporary removal from the release gate.
+
+**Remediation SLA**
+- Triage within 1 business day after the label is applied.
+- Assign an owner and remediation plan within 1 business day.
+- Land a fix, test stabilization change, or explicit follow-up update within 3 business days.
+- Remove the quarantine label after the test passes cleanly for 5 consecutive CI runs.
+
+**Quarantine rules**
+- Only quarantine tests with a documented failure pattern and reproduction notes.
+- Keep `continue-on-error: true` limited to the quarantined test job or matrix entry.
+- Re-run quarantined tests on every CI pass until the label is removed.
+
 ## Checklist for Stable E2E Tests
 
 - [ ] All tests use `waitForAppReady()` in `beforeAll`

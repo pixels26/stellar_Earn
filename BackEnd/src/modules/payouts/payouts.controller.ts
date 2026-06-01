@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { PayoutsService } from './payouts.service';
+import { FraudRiskRulesService } from './services/fraud-risk-rules.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -39,7 +40,10 @@ import { Role } from '../../common/enums/role.enum';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class PayoutsController {
-  constructor(private readonly payoutsService: PayoutsService) {}
+  constructor(
+    private readonly payoutsService: PayoutsService,
+    private readonly fraudRiskRulesService: FraudRiskRulesService,
+  ) {}
 
   @Post('claim')
   @HttpCode(HttpStatus.OK)
@@ -142,6 +146,8 @@ export class PayoutsController {
       submissionId: payout.submissionId,
       transactionHash: payout.transactionHash,
       stellarLedger: payout.stellarLedger,
+      settlementConfirmations: payout.settlementConfirmations,
+      settlementConfirmedAt: payout.settlementConfirmedAt,
       failureReason: payout.failureReason,
       retryCount: payout.retryCount,
       processedAt: payout.processedAt,
@@ -236,5 +242,54 @@ export class PayoutsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<PayoutResponseDto> {
     return this.payoutsService.getPayoutById(id);
+  }
+
+  @Get('fraud-risk/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Analyze payout for fraud/risk anomalies (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Payout UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fraud/risk assessment completed',
+  })
+  @ApiResponse({ status: 404, description: 'Payout not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async analyzePayoutRisk(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.fraudRiskRulesService.analyzePayout(id);
+  }
+
+  @Get('fraud-risk/batch')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Batch analyze recent payouts for fraud/risk anomalies (Admin only)' })
+  @ApiQuery({ name: 'hours', description: 'Hours to look back', required: false })
+  @ApiResponse({
+    status: 200,
+    description: 'Batch fraud/risk assessment completed',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async analyzeRecentPayoutsRisk(
+    @Query('hours') hours: number = 24,
+  ) {
+    return this.fraudRiskRulesService.analyzeRecentPayouts(hours);
+  }
+
+  @Get('fraud-risk/statistics')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get fraud/risk statistics (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fraud/risk statistics retrieved',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async getRiskStatistics() {
+    return this.fraudRiskRulesService.getRiskStatistics();
   }
 }

@@ -1,23 +1,27 @@
 'use client';
 
-import { useState, Suspense, useMemo } from 'react';
+import { useState, Suspense, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { FilterPanel } from '@/components/quest/FilterPanel';
 import { QuestList } from '@/components/quest/QuestList';
+import { OfflineIndicator } from '@/components/quest/OfflineIndicator';
 import { Pagination } from '@/components/ui/Pagination';
 import { mockQuests } from '@/lib/mock/quests';
 import { QuestStatus, QuestDifficulty } from '@/lib/types/quest';
 import type { Quest } from '@/lib/types/quest';
 import LazyLoad from '@/components/ui/LazyLoad';
 import { ComponentErrorBoundary } from '@/components/error/ErrorBoundary';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { useOnlineStatus } from '@/lib/hooks/useOnlineStatus';
 
 function QuestsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const { isOnline } = useOnlineStatus();
 
   // Get filters from URL params
   const statusParam = searchParams.get('status');
@@ -91,54 +95,88 @@ function QuestsContent() {
   );
 
   // Update URL when filters change
-  const updateURL = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    params.set('page', '1'); // Reset to first page when filters change
-    router.push(`/quests?${params.toString()}`);
-  };
+  const updateURL = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+      params.set('page', '1'); // Reset to first page when filters change
+      router.push(`/quests?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-  const handleStatusChange = (status: QuestStatus | undefined) => {
-    updateURL({ status: status || null });
-  };
+  const handleStatusChange = useCallback(
+    (status: QuestStatus | undefined) => {
+      updateURL({ status: status || null });
+    },
+    [updateURL]
+  );
 
-  const handleDifficultyChange = (difficulty: QuestDifficulty | undefined) => {
-    updateURL({ difficulty: difficulty || null });
-  };
+  const handleDifficultyChange = useCallback(
+    (difficulty: QuestDifficulty | undefined) => {
+      updateURL({ difficulty: difficulty || null });
+    },
+    [updateURL]
+  );
 
-  const handleCategoryChange = (category: string | undefined) => {
-    updateURL({ category: category || null });
-  };
+  const handleCategoryChange = useCallback(
+    (category: string | undefined) => {
+      updateURL({ category: category || null });
+    },
+    [updateURL]
+  );
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    updateURL({ search: query || null });
-  };
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      updateURL({ search: query || null });
+    },
+    [updateURL]
+  );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setSearchQuery('');
     router.push('/quests');
-  };
+  }, [router]);
 
   // Update URL when page changes
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
-    router.push(`/quests?${params.toString()}`);
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', page.toString());
+      router.push(`/quests?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-  const handleQuestClick = (quest: Quest) => {
-    router.push(`/quests/${quest.id}`);
-  };
+  const handleQuestClick = useCallback(
+    (quest: Quest) => {
+      router.push(`/quests/${quest.id}`);
+    },
+    [router]
+  );
+
+  // Retry handler for reloading quests when coming back online
+  const handleRetry = useCallback(async () => {
+    // In a real app, this would refetch from the API
+    // For now, just a no-op since we're using mock data
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }, []);
 
   return (
     <AppLayout>
+      {/* Offline Indicator */}
+      <OfflineIndicator
+        isOffline={!isOnline}
+        message="You appear to be offline. Quest data may not load properly."
+      />
+
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Header content */}
         <div
@@ -210,6 +248,7 @@ function QuestsContent() {
                 onQuestClick={handleQuestClick}
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={handleClearFilters}
+                onRetry={handleRetry}
               />
             </LazyLoad>
           </div>

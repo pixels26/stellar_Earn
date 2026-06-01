@@ -21,7 +21,8 @@ src/modules/jobs/
 │   ├── cleanup.processor.ts       # Maintenance tasks
 │   ├── webhook.processor.ts       # Webhook delivery
 │   ├── analytics.processor.ts     # Analytics & metrics
-│   └── quest.processor.ts         # Quest monitoring
+│   ├── quest.processor.ts         # Quest monitoring
+│   └── quest-state-reconciliation.processor.ts  # On-chain vs DB quest reconciliation
 ├── dto/
 │   └── job.dto.ts                 # Request/response DTOs
 └── JOB_QUEUE_IMPLEMENTATION.md    # Full documentation
@@ -104,6 +105,18 @@ const schedule = await jobSchedulerService.createSchedule(
 | `METRICS_COLLECT` | analytics | LOW | 2m | 5 | Collect system metrics |
 | `QUEST_DEADLINE_CHECK` | quests | MEDIUM | 60s | 5 | Check quest deadlines |
 | `QUEST_COMPLETION_VERIFY` | quests | MEDIUM | 60s | 5 | Verify quest completion |
+| `QUEST_STATE_RECONCILE` | cron | LOW | N/A | N/A | Compare on-chain quest state vs DB snapshot |
+
+## Quest State Reconciliation (SC-076 / #1546)
+
+Processor: `src/modules/jobs/processors/quest-state-reconciliation.processor.ts`
+
+Environment variables:
+- `CONTRACT_ID` (required): Earn Quest contract ID to query.
+- `SOROBAN_RPC_URL` (optional): Soroban RPC URL (defaults to testnet).
+- `QUEST_STATE_RECONCILIATION_ENABLED` (optional): set to `false` to disable.
+- `QUEST_STATE_RECONCILIATION_BATCH_SIZE` (optional): max quests checked per run (default `100`).
+- `SOROBAN_SIM_SOURCE_ACCOUNT` (optional): source account used for simulation tx building.
 
 ## Common Patterns
 

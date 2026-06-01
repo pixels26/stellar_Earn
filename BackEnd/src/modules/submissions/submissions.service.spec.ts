@@ -4,6 +4,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubmissionsService } from './submissions.service';
 import { Submission } from './entities/submission.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SubmissionBuilder } from '../../../test/utils/submission.builder';
 
 const buildUpdateBuilder = (affected = 1) => {
   const execute = jest.fn().mockResolvedValue({ affected });
@@ -20,22 +21,22 @@ describe('SubmissionsService (N+1 prevention)', () => {
   let submissionsRepo: any;
   let notifications: { sendSubmissionApproved: jest.Mock; sendSubmissionRejected: jest.Mock };
 
-  const buildSubmission = () => ({
-    id: 'sub-1',
-    questId: 'quest-1',
-    userId: 'user-1',
-    status: 'PENDING',
-    proof: {},
-    quest: {
+  const buildSubmission = () => new SubmissionBuilder()
+    .withId('sub-1')
+    .withQuestId('quest-1')
+    .withUserId('user-1')
+    .withStatus('PENDING' as any)
+    .withProof({})
+    .withQuest({
       id: 'quest-1',
       title: 'Complete KYC',
       rewardAmount: 10,
-    },
-    user: {
+    })
+    .withUser({
       id: 'user-1',
       stellarAddress: 'GABC',
-    },
-  });
+    })
+    .build();
 
   beforeEach(async () => {
     submissionsRepo = {

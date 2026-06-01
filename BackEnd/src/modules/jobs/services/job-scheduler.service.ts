@@ -428,6 +428,7 @@ private isValidCronExpression(expression: string): boolean {
       [JobType.METRICS_COLLECT]: 'analytics',
       [JobType.QUEST_DEADLINE_CHECK]: 'quests',
       [JobType.QUEST_COMPLETION_VERIFY]: 'quests',
+      [JobType.DEPENDENCY_FRESHNESS_CHECK]: 'maintenance',
     };
     return queueMap[jobType] || 'default';
   }

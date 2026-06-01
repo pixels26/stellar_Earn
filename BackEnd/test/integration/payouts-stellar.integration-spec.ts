@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { PayoutsModule } from '../../../src/modules/payouts/payouts.module';
-import { StellarModule } from '../../../src/modules/stellar/stellar.module';
-import { UsersModule } from '../../../src/modules/users/users.module';
-import { PayoutsService } from '../../../src/modules/payouts/payouts.service';
-import { StellarService } from '../../../src/modules/stellar/stellar.service';
-import { UsersService } from '../../../src/modules/users/user.service';
-import { Payout } from '../../../src/modules/payouts/entities/payout.entity';
-import { User } from '../../../src/modules/users/entities/user.entity';
+import { PayoutsModule } from '#src/modules/payouts/payouts.module';
+import { StellarModule } from '#src/modules/stellar/stellar.module';
+import { UsersModule } from '#src/modules/users/users.module';
+import { PayoutsService } from '#src/modules/payouts/payouts.service';
+import { StellarService } from '#src/modules/stellar/stellar.service';
+import { UsersService } from '#src/modules/users/user.service';
+import { Payout } from '#src/modules/payouts/entities/payout.entity';
+import { User } from '#src/modules/users/entities/user.entity';
 
 describe('Payouts-Stellar Integration', () => {
   let module: TestingModule;
