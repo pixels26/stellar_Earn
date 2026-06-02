@@ -5,6 +5,7 @@ import type { Quest } from '@/lib/types/quest';
 import { QuestDifficulty } from '@/lib/types/quest';
 
 import { useFormatter } from '@/lib/hooks/useFormatter';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 import { formatDeadlineLabel } from '@/lib/utils/date';
 
@@ -268,11 +269,12 @@ export const QuestCard = memo(
           {quest.creator && (
             <div className="quest-card__creator">
               {quest.creator.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <OptimizedImage
                   src={quest.creator.avatarUrl}
                   alt=""
-                  className="quest-card__avatar quest-card__avatar--img"
+                  width={22}
+                  height={22}
+                  containerClassName="quest-card__avatar quest-card__avatar--img"
                   aria-hidden="true"
                 />
               ) : (

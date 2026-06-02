@@ -26,3 +26,52 @@ export const DynamicToastNotification = dynamic(
     ),
   { ssr: false, loading: () => null }
 );
+
+// Homepage below-fold section dynamic imports
+export const DynamicHowItWorks = dynamic(
+  () =>
+    import('../components/homepage/HowItWorks').then((mod) => mod.HowItWorks),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[400px] w-full animate-pulse rounded-lg bg-slate-800/50" />
+    ),
+  }
+);
+
+export const DynamicFeaturedQuests = dynamic(
+  () =>
+    import('../components/homepage/FeaturedQuests').then(
+      (mod) => mod.default
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[500px] w-full animate-pulse rounded-lg bg-slate-800/50" />
+    ),
+  }
+);
+
+export const DynamicFAQAccordion = dynamic(
+  () =>
+    import('../components/homepage/FAQAccordion').then(
+      (mod) => mod.FAQAccordion
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[400px] w-full animate-pulse rounded-lg bg-slate-800/50" />
+    ),
+  }
+);
+
+export const DynamicCTASection = dynamic(
+  () =>
+    import('../components/homepage/CTASection').then((mod) => mod.CTASection),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[300px] w-full animate-pulse rounded-lg bg-slate-800/50" />
+    ),
+  }
+);
