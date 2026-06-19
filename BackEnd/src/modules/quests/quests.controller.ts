@@ -32,6 +32,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/auth.service';
 import { Role } from '../../common/enums/role.enum';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 
 @ApiTags('Quests')
 @Controller('quests')
@@ -41,6 +42,7 @@ export class QuestsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @RateLimit({ name: 'quest_creation' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new quest (Admin only)' })
   @ApiResponse({

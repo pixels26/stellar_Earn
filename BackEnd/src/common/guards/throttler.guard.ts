@@ -14,6 +14,20 @@ interface ThrottlerOption {
   ttl: number;
 }
 
+type HeaderValue = string | string[] | undefined;
+
+interface ThrottlerRequest {
+  user?: {
+    id?: string;
+    role?: string;
+    stellarAddress?: string;
+    sub?: string;
+  };
+  headers?: Record<string, HeaderValue>;
+  ips?: string[];
+  ip?: string;
+}
+
 @Injectable()
 export class AppThrottlerGuard extends ThrottlerGuard {
   constructor(
@@ -26,36 +40,34 @@ export class AppThrottlerGuard extends ThrottlerGuard {
     super(options, storageService, reflector);
   }
 
-  protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
-    const { req } = this.getRequestResponse(context);
+  protected shouldSkip(context: ExecutionContext): Promise<boolean> {
+    const req = this.getRequest(context);
     const userRole = this.extractUserRole(req);
 
     // Skip rate limiting for admins
     if (userRole === UserRole.ADMIN) {
-      return true;
+      return Promise.resolve(true);
     }
 
-    return false;
+    return Promise.resolve(false);
   }
 
   /**
    * Extract user identity and role information for per-user rate limiting
    */
-  private extractUserRole(
-    req: Record<string, any>,
-  ): string | undefined {
+  private extractUserRole(req: ThrottlerRequest): string | undefined {
     // Check if user is in request (from auth guard)
     if (req.user?.role) {
       return req.user.role;
     }
 
     // Try to extract role from JWT token
-    const authHeader = req.headers?.authorization;
+    const authHeader = this.getHeader(req, 'authorization');
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {
-        const payload = this.jwtService.verify(token) as { role?: string };
-        return payload?.role;
+        const payload = this.jwtService.verify<{ role?: string }>(token);
+        return payload.role;
       } catch {
         // ignore invalid tokens
       }
@@ -64,21 +76,25 @@ export class AppThrottlerGuard extends ThrottlerGuard {
     return undefined;
   }
 
-  protected async getTracker(req: Record<string, any>): Promise<string> {
-    const userId = req?.user?.id ?? req?.user?.stellarAddress ?? req?.user?.sub;
+  protected getTracker(req: Record<string, unknown>): Promise<string> {
+    return Promise.resolve(this.resolveTracker(req as ThrottlerRequest));
+  }
+
+  private resolveTracker(req: ThrottlerRequest): string {
+    const userId = req.user?.id ?? req.user?.stellarAddress ?? req.user?.sub;
     if (userId) {
       return `user:${userId}`;
     }
 
-    const authHeader = req?.headers?.authorization;
+    const authHeader = this.getHeader(req, 'authorization');
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {
-        const payload = this.jwtService.verify(token) as {
+        const payload = this.jwtService.verify<{
           sub?: string;
           stellarAddress?: string;
-        };
-        const jwtUserId = payload?.sub ?? payload?.stellarAddress;
+        }>(token);
+        const jwtUserId = payload.sub ?? payload.stellarAddress;
         if (jwtUserId) {
           return `user:${jwtUserId}`;
         }
@@ -87,7 +103,7 @@ export class AppThrottlerGuard extends ThrottlerGuard {
       }
     }
 
-    const forwarded = req.headers?.['x-forwarded-for'];
+    const forwarded = this.getHeader(req, 'x-forwarded-for');
     if (Array.isArray(forwarded) && forwarded.length > 0) {
       return `ip:${forwarded[0]}`;
     }
@@ -96,11 +112,11 @@ export class AppThrottlerGuard extends ThrottlerGuard {
       return `ip:${forwarded.split(',')[0].trim()}`;
     }
 
-    if (Array.isArray(req?.ips) && req.ips.length > 0) {
+    if (Array.isArray(req.ips) && req.ips.length > 0) {
       return `ip:${req.ips[0]}`;
     }
 
-    if (typeof req?.ip === 'string' && req.ip.length > 0) {
+    if (typeof req.ip === 'string' && req.ip.length > 0) {
       return `ip:${req.ip}`;
     }
 
@@ -113,28 +129,25 @@ export class AppThrottlerGuard extends ThrottlerGuard {
   protected getThrottleMetadata(
     context: ExecutionContext,
   ): { name: string; limit: number; ttl: number }[] {
-    const { req } = this.getRequestResponse(context);
+    const req = this.getRequest(context);
 
     // Get base throttle metadata from decorator or use default options
     const baseMetadata =
       this.reflector.getAllAndOverride<
-        { name: string; limit: number; ttl: number }[]
-      >('throttler', [context.getHandler(), context.getClass()]) ||
+        { name: string; limit: number; ttl: number }[] | undefined
+      >('throttler', [context.getHandler(), context.getClass()]) ??
       this.getDefaultMetadata();
 
     // Extract user role for per-user limiting
-    let userRole = req?.user?.role;
+    let userRole = req.user?.role;
 
     if (!userRole) {
-      const authHeader = req?.headers?.authorization;
-      if (
-        typeof authHeader === 'string' &&
-        authHeader.startsWith('Bearer ')
-      ) {
+      const authHeader = this.getHeader(req, 'authorization');
+      if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
         try {
-          const payload = this.jwtService.verify(token) as { role?: string };
-          userRole = payload?.role;
+          const payload = this.jwtService.verify<{ role?: string }>(token);
+          userRole = payload.role;
         } catch {
           // ignore invalid tokens
         }
@@ -143,7 +156,7 @@ export class AppThrottlerGuard extends ThrottlerGuard {
 
     // Determine the limit key based on role
     let limitKey: string = UserRole.USER; // default for authenticated users
-    const hasUser = req?.user?.id || req?.headers?.authorization;
+    const hasUser = req.user?.id ?? this.getHeader(req, 'authorization');
     if (!hasUser) {
       limitKey = 'anonymous'; // for anonymous users
     } else if (userRole) {
@@ -153,14 +166,47 @@ export class AppThrottlerGuard extends ThrottlerGuard {
     // Get per-user limit configuration
     const perUserLimitConfig = this.perUserRateLimitConfig.getLimit(limitKey);
 
-    // Apply per-user limits to metadata
+    // Apply endpoint-specific limits when a named @RateLimit config exists;
+    // otherwise keep the existing role/user-based throttling behavior.
     const updatedMetadata = baseMetadata.map((metadata) => ({
       ...metadata,
-      limit: perUserLimitConfig.limit,
-      ttl: perUserLimitConfig.ttl || metadata.ttl,
+      ...this.resolveMetadataLimit(metadata, perUserLimitConfig),
     }));
 
     return updatedMetadata;
+  }
+
+  private resolveMetadataLimit(
+    metadata: { name: string; limit: number; ttl: number },
+    perUserLimitConfig: { limit: number; ttl: number },
+  ): { limit: number; ttl: number } {
+    if (metadata.name && metadata.name !== 'default') {
+      const endpointLimitConfig = this.perUserRateLimitConfig.getLimit(
+        metadata.name,
+      );
+
+      return {
+        limit: endpointLimitConfig.limit,
+        ttl: endpointLimitConfig.ttl || metadata.ttl,
+      };
+    }
+
+    return {
+      limit: perUserLimitConfig.limit,
+      ttl: perUserLimitConfig.ttl || metadata.ttl,
+    };
+  }
+
+  private getRequest(context: ExecutionContext): ThrottlerRequest {
+    const { req } = this.getRequestResponse(context) as {
+      req: ThrottlerRequest;
+    };
+
+    return req;
+  }
+
+  private getHeader(req: ThrottlerRequest, name: string): HeaderValue {
+    return req.headers?.[name];
   }
 
   /**
@@ -175,7 +221,7 @@ export class AppThrottlerGuard extends ThrottlerGuard {
       throttlers?: ThrottlerOption[];
     };
 
-    if (options?.throttlers && Array.isArray(options.throttlers)) {
+    if (options.throttlers && Array.isArray(options.throttlers)) {
       return options.throttlers.map((throttler) => ({
         name: throttler.name || 'default',
         limit: throttler.limit,

@@ -2,10 +2,12 @@ import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../modules/auth/enums/user-role.enum';
 
 export interface PerUserRateLimitConfig {
-  [key: string]: {
-    limit: number;
-    ttl: number; // in milliseconds
-  };
+  [key: string]:
+    | {
+        limit: number;
+        ttl: number; // in milliseconds
+      }
+    | undefined;
 }
 
 /**
@@ -56,6 +58,30 @@ export class PerUserRateLimitConfigService {
       configService.get<string>('RATE_LIMIT_AUTH_USER_TTL'),
       defaultUserTTLSeconds,
     );
+    const questCreationLimit = parseNumber(
+      configService.get<string>('RATE_LIMIT_QUEST_CREATION_LIMIT'),
+      20,
+    );
+    const questCreationTTLSeconds = parseNumber(
+      configService.get<string>('RATE_LIMIT_QUEST_CREATION_TTL'),
+      defaultUserTTLSeconds,
+    );
+    const submissionLimit = parseNumber(
+      configService.get<string>('RATE_LIMIT_SUBMISSION_LIMIT'),
+      30,
+    );
+    const submissionTTLSeconds = parseNumber(
+      configService.get<string>('RATE_LIMIT_SUBMISSION_TTL'),
+      defaultUserTTLSeconds,
+    );
+    const payoutLimit = parseNumber(
+      configService.get<string>('RATE_LIMIT_PAYOUT_LIMIT'),
+      10,
+    );
+    const payoutTTLSeconds = parseNumber(
+      configService.get<string>('RATE_LIMIT_PAYOUT_TTL'),
+      defaultUserTTLSeconds,
+    );
 
     this.config = {
       // Anonymous users (IP-based tracking)
@@ -95,6 +121,20 @@ export class PerUserRateLimitConfigService {
         limit: authUserLimit,
         ttl: secondsToMs(authUserTTLSeconds),
       },
+
+      // Endpoint-specific limits
+      quest_creation: {
+        limit: questCreationLimit,
+        ttl: secondsToMs(questCreationTTLSeconds),
+      },
+      submission: {
+        limit: submissionLimit,
+        ttl: secondsToMs(submissionTTLSeconds),
+      },
+      payout: {
+        limit: payoutLimit,
+        ttl: secondsToMs(payoutTTLSeconds),
+      },
     };
   }
 
@@ -102,10 +142,9 @@ export class PerUserRateLimitConfigService {
    * Get rate limit config for a specific user role or tracker type
    */
   getLimit(roleOrKey: string): { limit: number; ttl: number } {
-    const config =
-      this.config[roleOrKey] ||
-      this.config[UserRole.USER] ||
-      this.config.anonymous;
+    const config = this.config[roleOrKey] ??
+      this.config[UserRole.USER] ??
+      this.config.anonymous ?? { limit: 100, ttl: 60000 };
 
     return {
       limit: config.limit,
@@ -125,6 +164,6 @@ export class PerUserRateLimitConfigService {
    */
   isRateLimited(roleOrKey: string): boolean {
     const config = this.config[roleOrKey];
-    return config && config.limit !== Infinity;
+    return config !== undefined && config.limit !== Infinity;
   }
 }

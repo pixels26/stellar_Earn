@@ -47,7 +47,7 @@ export class PayoutsController {
 
   @Post('claim')
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 10, ttlSeconds: 60 })
+  @RateLimit({ name: 'payout' })
   @ApiOperation({ summary: 'Claim a pending payout' })
   @ApiResponse({
     status: 200,
@@ -247,7 +247,9 @@ export class PayoutsController {
   @Get('fraud-risk/:id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Analyze payout for fraud/risk anomalies (Admin only)' })
+  @ApiOperation({
+    summary: 'Analyze payout for fraud/risk anomalies (Admin only)',
+  })
   @ApiParam({ name: 'id', description: 'Payout UUID' })
   @ApiResponse({
     status: 200,
@@ -256,26 +258,29 @@ export class PayoutsController {
   @ApiResponse({ status: 404, description: 'Payout not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  async analyzePayoutRisk(
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async analyzePayoutRisk(@Param('id', ParseUUIDPipe) id: string) {
     return this.fraudRiskRulesService.analyzePayout(id);
   }
 
   @Get('fraud-risk/batch')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Batch analyze recent payouts for fraud/risk anomalies (Admin only)' })
-  @ApiQuery({ name: 'hours', description: 'Hours to look back', required: false })
+  @ApiOperation({
+    summary:
+      'Batch analyze recent payouts for fraud/risk anomalies (Admin only)',
+  })
+  @ApiQuery({
+    name: 'hours',
+    description: 'Hours to look back',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'Batch fraud/risk assessment completed',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  async analyzeRecentPayoutsRisk(
-    @Query('hours') hours: number = 24,
-  ) {
+  async analyzeRecentPayoutsRisk(@Query('hours') hours: number = 24) {
     return this.fraudRiskRulesService.analyzeRecentPayouts(hours);
   }
 
